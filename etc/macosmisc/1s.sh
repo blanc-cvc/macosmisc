@@ -7,7 +7,7 @@ _keepalive() {
     exit 0
 }
 _job() {
-    /bin/bash /etc/.custom/ifmanager.sh --action DOWN --exclude en0 >/dev/null 2>&1
+    /bin/bash /etc/macosmisc/ifmanager.sh --action DOWN --exclude hardware >/dev/null 2>&1
 }
 trap _keepalive SIGINT SIGTERM
 while true; do

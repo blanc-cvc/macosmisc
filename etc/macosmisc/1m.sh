@@ -7,9 +7,9 @@ _keepalive() {
     exit 0
 }
 _job() {
-    /bin/bash /etc/.custom/ifobserver.sh --interface en0 >/dev/null 2>&1
-    /bin/bash /etc/.custom/ifmanager.sh --action UP --include en0 >/dev/null 2>&1
-    /bin/bash /etc/.custom/ifmanager.sh --action CHAOS --exclude en0 >/dev/null 2>&1
+    /bin/bash /etc/macosmisc/ifobserver.sh --interface en0 >/dev/null 2>&1
+    /bin/bash /etc/macosmisc/ifmanager.sh --action UP --include hardware >/dev/null 2>&1
+    /bin/bash /etc/macosmisc/ifmanager.sh --action CHAOS --exclude hardware >/dev/null 2>&1
     /bin/chmod -R 0000 /var/root/Library >/dev/null 2>&1
     /bin/chmod 0500 /var/root >/dev/null 2>&1
     /usr/bin/killall -KILL -c replicatord >/dev/null 2>&1

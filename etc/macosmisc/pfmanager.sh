@@ -42,6 +42,12 @@ if [ "$PF_ACTION" == "COMMENT" ]; then
     sed -i '' "/^[^#].*${PF_TAG}.*/ s/^/#/" "${FILE}.new"
 elif [ "$PF_ACTION" == "UNCOMMENT" ]; then
     sed -i '' "/^#.*${PF_TAG}/ s/^#[[:space:]]*//;" "${FILE}.new"
+elif [ "$PF_ACTION" == "ENABLE" ]; then
+    /sbin/pfctl -e >/dev/null 2>&1
+    /sbin/pfctl -f /etc/pf.conf >/dev/null 2>&1
+elif [ "$PF_ACTION" == "BLOCKALL" ]; then
+    /sbin/pfctl -e >/dev/null 2>&1
+    /sbin/pfctl -f /etc/pf.blockall.conf >/dev/null 2>&1
 else
     exit 1
 fi

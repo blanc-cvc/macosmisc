@@ -8,7 +8,7 @@
     <key>ProgramArguments</key>
     <array>
         <string>/bin/bash</string>
-        <string>/etc/.custom/10s.sh</string>
+        <string>/etc/macosmisc/10s.sh</string>
     </array>
 
     <key>KeepAlive</key>

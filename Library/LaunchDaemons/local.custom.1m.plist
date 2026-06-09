@@ -8,7 +8,7 @@
     <key>ProgramArguments</key>
     <array>
         <string>/bin/bash</string>
-        <string>/etc/.custom/1m.sh</string>
+        <string>/etc/macosmisc/1m.sh</string>
     </array>
 
     <key>KeepAlive</key>
