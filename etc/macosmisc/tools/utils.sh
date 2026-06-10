@@ -76,3 +76,57 @@ _utils_wifi_ethernet_interfaces() {
     [ "$1" == "IFS_EXCLUDED" ] && IFS_EXCLUDED=(${netifaces[@]})
     [ "$1" == "IFS_INCLUDED" ] && IFS_INCLUDED=(${netifaces[@]})
 }
+
+
+
+_utils_pf_init_rules() {
+    local interface_list=("$@")
+    local tmp_file=$(mktemp)
+    local PF_FILE=""
+
+    if [[ "$(id -u)" == "0" ]]; then
+        PF_FILE="/etc/pf.conf"
+    else
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        PF_FILE="$SCRIPT_DIR/../../pf.conf.test"
+    fi
+
+    for interface in "${interface_list[@]}"; do
+        cp "$PF_FILE" "$tmp_file"
+        
+        while IFS= read -r line || [[ -n "$line" ]]; do
+            if [[ "$line" == *'$extif'* ]]; then
+                new_line="${line//\$extif/$interface} # @IF_$interface"
+                if ! grep -qF "$new_line" "$tmp_file" && ! grep -qF "${new_line%% #*}" "$tmp_file"; then
+                    awk -v orig="$line" -v insert="$new_line" '
+                    {
+                        print $0
+                        if ($0 == orig) print insert
+                    }' "$tmp_file" > "${tmp_file}.new" && mv "${tmp_file}.new" "$tmp_file"
+                fi
+            fi
+        done < "$PF_FILE"
+
+        mv "$tmp_file" "${PF_FILE}.new"
+    done
+}
+
+
+_utils_detect_dns_type() {
+    dns-sd -G v4 github.com >/dev/null 2>&1 &
+    PID=$!
+    sleep 5
+    kill $PID >/dev/null 2>&1
+    wait $PID >/dev/null 2>&1
+    sleep 1
+    local logs=$(log show --last 20s --predicate 'process == "mDNSResponder" && eventMessage contains "type:"' --style compact 2>/dev/null)
+    if echo "$logs" | grep -q "type: DoH"; then
+        echo "DoH"
+    elif echo "$logs" | grep -q "type: DoT"; then
+        echo "DoT"
+    elif echo "$logs" | grep -q "type: Do53"; then
+        echo "Do53"
+    else
+        echo "Unknown"
+    fi
+}

@@ -3,16 +3,16 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>local.custom.2s</string>
+    <string>local.macosmisc.once</string>
 
     <key>ProgramArguments</key>
     <array>
         <string>/bin/bash</string>
-        <string>/etc/macosmisc/2s.sh</string>
+        <string>/etc/macosmisc/once.sh</string>
     </array>
 
     <key>KeepAlive</key>
-    <true/>
+    <false/>
 
     <key>RunAtLoad</key>
     <true/>

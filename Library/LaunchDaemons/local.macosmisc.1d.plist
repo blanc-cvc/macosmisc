@@ -3,19 +3,16 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>local.custom.off</string>
+    <string>local.macosmisc.1d</string>
 
     <key>ProgramArguments</key>
     <array>
         <string>/bin/bash</string>
-        <string>/etc/macosmisc/off.sh</string>
+        <string>/etc/macosmisc/1d.sh</string>
     </array>
 
     <key>KeepAlive</key>
     <true/>
-
-    <key>ExitTimeOut</key>
-    <integer>300</integer>
 
     <key>RunAtLoad</key>
     <true/>

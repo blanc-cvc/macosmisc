@@ -1,10 +1,5 @@
 #set loginterface lo0
-#set debug loud
 set debug none
-
-extif = "en0"
-
-#set loginterface $extif
 set ruleset-optimization none
 set optimization normal
 set block-policy drop
@@ -13,54 +8,57 @@ scrub all
 
 table <private> const { 10/8, 172.16/12, 192.168/16 }
 table <bogons> const { 0/8, 169/8, 198/8, 203/8, 224/8, 225/8, 226/8, 227/8, 228/8, 229/8, 230/8, 231/8, 232/8, 233/8, 234/8, 235/8, 236/8, 237/8, 238/8, 239/8, 240/8, 241/8, 242/8, 243/8, 244/8, 245/8, 246/8, 247/8, 248/8, 249/8, 250/8, 251/8, 252/8, 253/8, 254/8, 255/8 }
-#table <dns> const { 8.8.4.4, 86.54.11.100, 86.54.11.200 }
-
+table <dns> const { 86.54.11.100, 86.54.11.200 }
 table <porthttps> const { 18.7.29.125, 91.210.59.156, 131.188.12.211, 167.82.50.132, 136.243.18.213, 151.101.2.132, 151.101.194.132, 151.101.66.132, 151.101.130.132, 185.199.108.133, 185.199.109.133, 185.199.110.133, 185.199.111.133 }
 table <portrsync> const { 131.188.12.211 }
+table <commondoh> const { 1.1.1.1, 1.0.0.1, 8.8.8.8, 8.8.4.4, 9.9.9.9, 149.112.112.112, 94.140.14.14, 94.140.15.15, 86.54.11.100, 86.54.11.200, 86.54.11.1, 86.54.11.201, 86.54.11.13, 86.54.11.213, 194.242.2.2, 194.242.2.3, 80.67.169.12, 80.67.169.40, 185.228.168.168, 185.228.169.168, 185.228.168.10, 185.228.169.11, 208.67.222.222, 208.67.220.220, 208.67.222.123, 208.67.220.123, 208.67.222.2, 208.67.220.2 }
 
 block all
-block     quick             inet6
+block quick inet6
+block quick on lo0 inet from <private>
+block quick on ! lo0 inet from 127/8
 
 pass out quick inet proto icmp
 
 #### PASS QUICK
+## DHCP user root (blocked by: 'block quick to { <private>, <bogons> }' if not before BLOCK QUICK)
+#pass out quick on $extif inet proto udp from 0.0.0.0 port 68 to <private> port 67 user 0 no state # @DHCP # @DHCP_OUT
+#pass out quick on en0 inet proto udp from 0.0.0.0 port 68 to <private> port 67 user 0 no state # @DHCP # @DHCP_OUT # @IF_en0
+#pass in  quick on $extif inet proto udp from <private> port 67 to any port 68 user 0 no state # @DHCP # @DHCP_IN
+#pass in  quick on en0 inet proto udp from <private> port 67 to any port 68 user 0 no state # @DHCP # @DHCP_IN # @IF_en0
 ## DNS 53 user _mdnsresponder
-#pass  out quick on $extif   inet   proto udp  from ($extif)                 to <dns>          port 53                      user _mdnsresponder
+#pass out quick on $extif inet proto udp from ($extif) to <dns> port 53 user _mdnsresponder # @DNS
+#pass out quick on en0 inet proto udp from (en0) to <dns> port 53 user _mdnsresponder # @DNS # @IF_en0
 ## DNS 443 (DoH) user _mdnsresponder (via mobileconfig) here using censurfridns.dk||uncensoreddns.org
-pass  out quick on $extif   inet   proto tcp  from ($extif)                 to 89.233.43.71   port 443                     user _mdnsresponder
-pass  out quick on en1   inet   proto tcp  from (en1)                 to 89.233.43.71   port 443                     user _mdnsresponder # @IF_en1
-pass  out quick on en0   inet   proto tcp  from (en0)                 to 89.233.43.71   port 443                     user _mdnsresponder # @IF_en0
-## DHCP user root
-#pass  out quick on $extif   inet   proto udp  from 0.0.0.0 port 68 to <private> port 67 user 0 no state # @DHCP_OUT
-#pass  in  quick on $extif   inet   proto udp  from <private> port 67 to any port 68 user 0 no state # @DHCP_IN
+#pass out quick on $extif inet proto tcp from ($extif) to 89.233.43.71 port 443 user _mdnsresponder # @DOH
+#pass out quick on en0 inet proto tcp from (en0) to 89.233.43.71 port 443 user _mdnsresponder # @DOH # @IF_en0
+## DNS 853 (DoT) user _mdnsresponder (via mobileconfig) here using censurfridns.dk||uncensoreddns.org
+#pass out quick on $extif inet proto tcp from ($extif) to 89.233.43.71 port 853 user _mdnsresponder # @DOT
+#pass out quick on en0 inet proto tcp from (en0) to 89.233.43.71 port 853 user _mdnsresponder # @DOT # @IF_en0
 
 #### BLOCK QUICK
-block     quick                                                             to { <private>, <bogons> }
-block     quick on ! lo0    inet              from 127/8
-block     quick on   lo0    inet              from <private>
-block     quick on ! $extif
-block     quick on ! en1 # @IF_en1
-block     quick on ! en0 # @IF_en0
+block quick to { <private>, <bogons>, <dns>, <commondoh> } # commondoh: important, try to not bypass mDNSResponder
 
 #### PASS
 ## HTTPS MAIL user 501
-pass  out       on $extif   inet   proto tcp  from ($extif)                 to                 port { 443, 993, 587, 465 }  user 501
-pass  out       on en1   inet   proto tcp  from (en1)                 to                 port { 443, 993, 587, 465 }  user 501 # @IF_en1
-pass  out       on en0   inet   proto tcp  from (en0)                 to                 port { 443, 993, 587, 465 }  user 501 # @IF_en0
-## PORT user root and user 502
-pass  out       on $extif   inet   proto tcp  from ($extif)                 to { <porthttps> } port { 443 } user 0
-pass  out       on en1   inet   proto tcp  from (en1)                 to { <porthttps> } port { 443 } user 0 # @IF_en1
-pass  out       on en0   inet   proto tcp  from (en0)                 to { <porthttps> } port { 443 } user 0 # @IF_en0
-pass  out       on $extif   inet   proto tcp  from ($extif)                 to { <porthttps> } port { 443 } user 502
-pass  out       on en1   inet   proto tcp  from (en1)                 to { <porthttps> } port { 443 } user 502 # @IF_en1
-pass  out       on en0   inet   proto tcp  from (en0)                 to { <porthttps> } port { 443 } user 502 # @IF_en0
-pass  out       on $extif   inet   proto tcp  from ($extif)                 to { <portrsync> } port { 873 } user 0
-pass  out       on en1   inet   proto tcp  from (en1)                 to { <portrsync> } port { 873 } user 0 # @IF_en1
-pass  out       on en0   inet   proto tcp  from (en0)                 to { <portrsync> } port { 873 } user 0 # @IF_en0
-pass  out       on $extif   inet   proto tcp  from ($extif)                 to { <portrsync> } port { 873 } user 502
-pass  out       on en1   inet   proto tcp  from (en1)                 to { <portrsync> } port { 873 } user 502 # @IF_en1
-pass  out       on en0   inet   proto tcp  from (en0)                 to { <portrsync> } port { 873 } user 502 # @IF_en0
+#pass out quick on $extif inet proto tcp from ($extif) to port { 443 } user 501 # @USER_HTTPS
+#pass out quick on en0 inet proto tcp from (en0) to port { 443 } user 501 # @USER_HTTPS # @IF_en0
+#pass out quick on $extif inet proto tcp from ($extif) to port { 993, 587, 465 } user 501 # @USER_MAIL
+#pass out quick on en0 inet proto tcp from (en0) to port { 993, 587, 465 } user 501 # @USER_MAIL # @IF_en0
+## PORT user root and user 502(macports)
+#pass out quick on $extif inet proto tcp from ($extif) to { <porthttps> } port { 443 } user 0 # @PORT # @PORT_ROOT_HTTPS
+#pass out quick on en0 inet proto tcp from (en0) to { <porthttps> } port { 443 } user 0 # @PORT # @PORT_ROOT_HTTPS # @IF_en0
+#pass out quick on $extif inet proto tcp from ($extif) to { <porthttps> } port { 443 } user 502 # @PORT # @PORT_USER_HTTPS
+#pass out quick on en0 inet proto tcp from (en0) to { <porthttps> } port { 443 } user 502 # @PORT # @PORT_USER_HTTPS # @IF_en0
+#pass out quick on $extif inet proto tcp from ($extif) to { <portrsync> } port { 873 } user 0 # @PORT # @PORT_ROOT_RSYNC
+#pass out quick on en0 inet proto tcp from (en0) to { <portrsync> } port { 873 } user 0 # @PORT # @PORT_ROOT_RSYNC # @IF_en0
+#pass out quick on $extif inet proto tcp from ($extif) to { <portrsync> } port { 873 } user 502 # @PORT # @PORT_USER_RSYNC
+#pass out quick on en0 inet proto tcp from (en0) to { <portrsync> } port { 873 } user 502 # @PORT # @PORT_USER_RSYNC # @IF_en0
 
+block quick all # IMPORTANT: no more rules !
+
+
+######## END OF RULES
 
 ## PORT IP LIST
 # trac.macports.org : 136.243.18.213 (https)

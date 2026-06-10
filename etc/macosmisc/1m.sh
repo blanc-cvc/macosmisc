@@ -7,9 +7,12 @@ _keepalive() {
     exit 0
 }
 _job() {
-    /bin/bash /etc/macosmisc/ifobserver.sh --interface en0 >/dev/null 2>&1
-    /bin/bash /etc/macosmisc/ifmanager.sh --action UP --include hardware >/dev/null 2>&1
-    /bin/bash /etc/macosmisc/ifmanager.sh --action CHAOS --exclude hardware >/dev/null 2>&1
+    dscacheutil -flushcache
+    killall -HUP mDNSResponder
+    /bin/bash /etc/macosmisc/tools/pfmanager.sh --action UNCOMMENT_AUTO_DNSTYPE >/dev/null 2>&1
+    /bin/bash /etc/macosmisc/tools/ifobserver.sh --interface en0 >/dev/null 2>&1
+    /bin/bash /etc/macosmisc/tools/ifmanager.sh --action UP --include hardware >/dev/null 2>&1
+    /bin/bash /etc/macosmisc/tools/ifmanager.sh --action CHAOS --exclude hardware >/dev/null 2>&1
     /bin/chmod -R 0000 /var/root/Library >/dev/null 2>&1
     /bin/chmod 0500 /var/root >/dev/null 2>&1
     /usr/bin/killall -KILL -c replicatord >/dev/null 2>&1

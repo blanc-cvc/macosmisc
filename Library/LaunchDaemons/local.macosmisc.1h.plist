@@ -3,12 +3,12 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>local.custom.1d</string>
+    <string>local.macosmisc.1h</string>
 
     <key>ProgramArguments</key>
     <array>
         <string>/bin/bash</string>
-        <string>/etc/macosmisc/1d.sh</string>
+        <string>/etc/macosmisc/1h.sh</string>
     </array>
 
     <key>KeepAlive</key>

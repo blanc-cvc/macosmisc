@@ -7,8 +7,8 @@ _keepalive() {
     exit 0
 }
 _job() {
-    /bin/bash /etc/macosmisc/pfmanager.sh --action ENABLE >/dev/null 2>&1
-    /bin/bash /etc/macosmisc/ifmanager.sh --action AIRPORTPREFS --include wifi >/dev/null 2>&1
+    /bin/bash /etc/macosmisc/tools/pfmanager.sh --action ENABLE >/dev/null 2>&1
+    /bin/bash /etc/macosmisc/tools/ifmanager.sh --action AIRPORTPREFS --include wifi >/dev/null 2>&1
 }
 trap _keepalive SIGINT SIGTERM
 while true; do
