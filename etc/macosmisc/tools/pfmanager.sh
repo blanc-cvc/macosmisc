@@ -57,11 +57,16 @@ comment() {
 uncomment() {
     sed -i '' "/^#.*${PF_TAG}.*/ { /\$extif/! s/^#[[:space:]]*//; }" "${PF_FILE}.new"
 }
+remove() {
+    sed -i '' "/${PF_TAG}.*/ { /\$extif/! d; }" "${PF_FILE}.new"
+}
 
 if [ "$PF_ACTION" == "COMMENT" ]; then
-    _comment
+    comment
 elif [ "$PF_ACTION" == "UNCOMMENT" ]; then
-    _uncomment
+    uncomment
+elif [ "$PF_ACTION" == "REMOVE" ]; then
+    remove
 elif [ "$PF_ACTION" == "ENABLE" ]; then
     /sbin/pfctl -e >/dev/null 2>&1
     /sbin/pfctl -f /etc/pf.conf >/dev/null 2>&1
@@ -75,21 +80,21 @@ elif [ "$PF_ACTION" == "INITRULES" ]; then
 elif [ "$PF_ACTION" == "UNCOMMENT_AUTO_DNSTYPE" ]; then
     DNS_TYPE=$(_utils_detect_dns_type)
     if [ "$DNS_TYPE" == "DoH" ]; then
-        PF_TAG="@DOH" && uncomment
-        PF_TAG="@DOT" && comment
-        PF_TAG="@DNS" && comment
+        PF_TAG="@DNS_DOH" && uncomment
+        PF_TAG="@DNS_DOT" && comment
+        PF_TAG="@DNS_DNS" && comment
     elif [ "$DNS_TYPE" == "DoT" ]; then
-        PF_TAG="@DOH" && comment
-        PF_TAG="@DOT" && uncomment
-        PF_TAG="@DNS" && comment
+        PF_TAG="@DNS_DOH" && comment
+        PF_TAG="@DNS_DOT" && uncomment
+        PF_TAG="@DNS_DNS" && comment
     elif [ "$DNS_TYPE" == "Do53" ]; then
-        PF_TAG="@DOH" && comment
-        PF_TAG="@DOT" && comment
-        PF_TAG="@DNS" && uncomment
+        PF_TAG="@DNS_DOH" && comment
+        PF_TAG="@DNS_DOT" && comment
+        PF_TAG="@DNS_DNS" && uncomment
     else
-        PF_TAG="@DOH" && comment
-        PF_TAG="@DOT" && comment
-        PF_TAG="@DNS" && comment
+        PF_TAG="@DNS_DOH" && comment
+        PF_TAG="@DNS_DOT" && comment
+        PF_TAG="@DNS_DNS" && comment
     fi
     
     echo "$DNS_TYPE"
@@ -100,7 +105,7 @@ fi
 
 if ! pfctl -nf "${PF_FILE}.new" 2>/dev/null; then
     echo "ERROR: Invalid new pf.conf ! Abort."
-    #rm "${PF_FILE}.new"
+    mv "${PF_FILE}.new" "${PF_FILE}.invalid"
     exit 1
 fi
 

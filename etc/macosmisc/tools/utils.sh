@@ -111,14 +111,19 @@ _utils_pf_init_rules() {
     done
 }
 
-
+# doesnt really works
 _utils_detect_dns_type() {
-    dns-sd -G v4 github.com >/dev/null 2>&1 &
+    local r1=$(printf "%04d" $((RANDOM % 1000000)))
+    local r2=$(printf "%04d" $((RANDOM % 1000000)))
+    local r3=$(printf "%04d" $((RANDOM % 1000000)))
+    local random_tld="${r1}${r2}${r3}"
+    local fake_domain="macosmisc.${random_tld}"
+    dns-sd -G v4 "$fake_domain" >/dev/null 2>&1 &
     PID=$!
     sleep 5
     kill $PID >/dev/null 2>&1
     wait $PID >/dev/null 2>&1
-    sleep 1
+    sleep 5
     local logs=$(log show --last 20s --predicate 'process == "mDNSResponder" && eventMessage contains "type:"' --style compact 2>/dev/null)
     if echo "$logs" | grep -q "type: DoH"; then
         echo "DoH"
