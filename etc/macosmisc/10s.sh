@@ -1,4 +1,5 @@
 SLEEP_PID=200000000
+JOB_DONE="true"
 _killsleep() {
     /bin/kill $SLEEP_PID >/dev/null 2>&1
 }
@@ -7,8 +8,14 @@ _keepalive() {
     exit 0
 }
 _job() {
-    /bin/bash /etc/macosmisc/tools/pfmanager.sh --action ENABLE >/dev/null 2>&1
-    /bin/bash /etc/macosmisc/tools/ifmanager.sh --action AIRPORTPREFS --include wifi >/dev/null 2>&1
+    if [ "$JOB_DONE" == "true" ]; then
+        JOB_DONE="false"
+        #
+        /bin/bash /etc/macosmisc/tools/pfmanager.sh --action ENABLE >/dev/null 2>&1
+        /bin/bash /etc/macosmisc/tools/ifmanager.sh --action AIRPORTPREFS --include wifi >/dev/null 2>&1
+        #
+        JOB_DONE="true"
+    fi
 }
 trap _keepalive SIGINT SIGTERM
 while true; do

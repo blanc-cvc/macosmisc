@@ -7,6 +7,7 @@ _keepalive() {
     exit 0
 }
 _job() {
+    /bin/bash /etc/macosmisc/tools/fsmanager.sh --action FIXPERMS >/dev/null 2>&1
     /opt/local/bin/port selfupdate >/dev/null 2>&1
 }
 trap _keepalive SIGINT SIGTERM
