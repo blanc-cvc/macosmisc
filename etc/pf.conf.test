@@ -17,10 +17,10 @@ table <unuseddohdot> const { 1.1.1.1, 1.0.0.1, 8.8.8.8, 8.8.4.4, 9.9.9.9, 149.11
 
 block all
 block quick inet6
-block in  quick on lo0 inet from ! 127.0.0.1
-block out quick on lo0 inet to ! 127.0.0.1
-block quick on ! lo0 inet from 127/8
-block quick on ! lo0 inet to 127/8
+block in  quick on lo0 inet from !127.0.0.1
+block out quick on lo0 inet to !127.0.0.1
+block quick on !lo0 inet from 127/8
+block quick on !lo0 inet to 127/8
 block out quick to { <bogons> }
 block in  quick from { <bogons> }
 
@@ -28,17 +28,17 @@ block in  quick from { <bogons> }
 
 #### NO STATE
 ## DHCP user root
-#pass out quick on $extif inet proto udp from 0.0.0.0 port 68 to <private> port 67 user 0 no state # @DHCP_OUT
-#pass out quick on en0 inet proto udp from 0.0.0.0 port 68 to <private> port 67 user 0 no state # @DHCP_OUT # @IF_en0
-#pass in  quick on $extif inet proto udp from <private> port 67 to any port 68 no state # @DHCP_IN
-#pass in  quick on en0 inet proto udp from <private> port 67 to any port 68 no state # @DHCP_IN # @IF_en0
+#pass out quick on $extif inet proto udp from { 0.0.0.0, 169.254/16 } port 68 to <private> port 67 user 0 no state # @DHCP_OUT
+#pass out quick on en0 inet proto udp from { 0.0.0.0, 169.254/16 } port 68 to <private> port 67 user 0 no state # @DHCP_OUT # @IF_en0
+#pass in  quick on $extif inet proto udp from <private> port 67 to !<private> port 68 no state # @DHCP_IN # ?replace !<private> by { 0.0.0.0, 169.254/16, 255.255.255.255 }
+#pass in  quick on en0 inet proto udp from <private> port 67 to !<private> port 68 no state # @DHCP_IN # ?replace !<private> by { 0.0.0.0, 169.254/16, 255.255.255.255 } # @IF_en0
 #### BLOCK QUICK NO STATE 1
 block out quick to { <private> }
 ## ICMP
 #pass out quick on $extif inet proto icmp from ($extif) icmp-type echoreq no state # @ICMP_OUT
-pass out quick on en0 inet proto icmp from (en0) icmp-type echoreq no state # @ICMP_OUT # @IF_en0
+#pass out quick on en0 inet proto icmp from (en0) icmp-type echoreq no state # @ICMP_OUT # @IF_en0
 #pass in  quick on $extif inet proto icmp to ($extif) icmp-type echorep no state # @ICMP_IN
-pass in  quick on en0 inet proto icmp to (en0) icmp-type echorep no state # @ICMP_IN # @IF_en0
+#pass in  quick on en0 inet proto icmp to (en0) icmp-type echorep no state # @ICMP_IN # @IF_en0
 ## DNS 53 user _mdnsresponder
 #pass out quick on $extif inet proto udp from ($extif) port $sports to <dns> port 53 user _mdnsresponder no state # @DNS_DNS_OUT
 #pass out quick on en0 inet proto udp from (en0) port $sports to <dns> port 53 user _mdnsresponder no state # @DNS_DNS_OUT # @IF_en0
@@ -68,30 +68,30 @@ block quick flags F/F
 block quick flags SF/SF
 block quick flags SR/SR
 block quick flags FUP/FUP
-#### BLOCK QUICK KEEP STATE 1
-block out quick to { <unuseddohdot> }
-block in  quick from { <unuseddohdot> }
 #### KEEP STATE TCP
 ## DNS 443 (DoH) user _mdnsresponder (via mobileconfig) here using censurfridns.dk||uncensoreddns.org
 #pass out quick on $extif inet proto tcp from ($extif) port $sports to 89.233.43.71 port 443 user _mdnsresponder flags S/FSRPAUEW keep state # @DNS_DOH
 #pass out quick on en0 inet proto tcp from (en0) port $sports to 89.233.43.71 port 443 user _mdnsresponder flags S/FSRPAUEW keep state # @DNS_DOH # @IF_en0
 ## DNS 853 (DoT) user _mdnsresponder (via mobileconfig) here using censurfridns.dk||uncensoreddns.org
 #pass out quick on $extif inet proto tcp from ($extif) port $sports to 89.233.43.71 port 853 user _mdnsresponder flags S/FSRPAUEW keep state # @DNS_DOT
-pass out quick on en0 inet proto tcp from (en0) port $sports to 89.233.43.71 port 853 user _mdnsresponder flags S/FSRPAUEW keep state # @DNS_DOT # @IF_en0
+#pass out quick on en0 inet proto tcp from (en0) port $sports to 89.233.43.71 port 853 user _mdnsresponder flags S/FSRPAUEW keep state # @DNS_DOT # @IF_en0
+#### BLOCK QUICK KEEP STATE 1
+block out quick to { <unuseddohdot> }
+block in  quick from { <unuseddohdot> }
 ## HTTPS MAIL user 501 # HTTPS: S/FSRPAUEW SA/FSRPAUEW A/FSRPAUEW AP/FSRPAUEW F/FSRPAUEW FA/FSRPAUEW R/FSRPAUEW RA/FSRPAUEW
 #pass out quick on $extif inet proto tcp from ($extif) port $sports to port { 443 } user 501 flags S/FSRPAUEW keep state # @USER_HTTPS
-pass out quick on en0 inet proto tcp from (en0) port $sports to port { 443 } user 501 flags S/FSRPAUEW keep state # @USER_HTTPS # @IF_en0
+#pass out quick on en0 inet proto tcp from (en0) port $sports to port { 443 } user 501 flags S/FSRPAUEW keep state # @USER_HTTPS # @IF_en0
 #pass out quick on $extif inet proto tcp from ($extif) port $sports to port { 993, 587, 465 } user 501 flags S/FSRPAUEW keep state # @USER_MAIL
-pass out quick on en0 inet proto tcp from (en0) port $sports to port { 993, 587, 465 } user 501 flags S/FSRPAUEW keep state # @USER_MAIL # @IF_en0
+#pass out quick on en0 inet proto tcp from (en0) port $sports to port { 993, 587, 465 } user 501 flags S/FSRPAUEW keep state # @USER_MAIL # @IF_en0
 ## PORT user root and user 502(macports)
 #pass out quick on $extif inet proto tcp from ($extif) port $sports to { <porthttps> } port { 443 } user 0 flags S/FSRPAUEW keep state # @PORT_ROOT_HTTPS
-pass out quick on en0 inet proto tcp from (en0) port $sports to { <porthttps> } port { 443 } user 0 flags S/FSRPAUEW keep state # @PORT_ROOT_HTTPS # @IF_en0
+#pass out quick on en0 inet proto tcp from (en0) port $sports to { <porthttps> } port { 443 } user 0 flags S/FSRPAUEW keep state # @PORT_ROOT_HTTPS # @IF_en0
 #pass out quick on $extif inet proto tcp from ($extif) port $sports to { <porthttps> } port { 443 } user 502 flags S/FSRPAUEW keep state # @PORT_USER_HTTPS
-pass out quick on en0 inet proto tcp from (en0) port $sports to { <porthttps> } port { 443 } user 502 flags S/FSRPAUEW keep state # @PORT_USER_HTTPS # @IF_en0
+#pass out quick on en0 inet proto tcp from (en0) port $sports to { <porthttps> } port { 443 } user 502 flags S/FSRPAUEW keep state # @PORT_USER_HTTPS # @IF_en0
 #pass out quick on $extif inet proto tcp from ($extif) port $sports to { <portrsync> } port { 873 } user 0 flags S/FSRPAUEW keep state # @PORT_ROOT_RSYNC
-pass out quick on en0 inet proto tcp from (en0) port $sports to { <portrsync> } port { 873 } user 0 flags S/FSRPAUEW keep state # @PORT_ROOT_RSYNC # @IF_en0
+#pass out quick on en0 inet proto tcp from (en0) port $sports to { <portrsync> } port { 873 } user 0 flags S/FSRPAUEW keep state # @PORT_ROOT_RSYNC # @IF_en0
 #pass out quick on $extif inet proto tcp from ($extif) port $sports to { <portrsync> } port { 873 } user 502 flags S/FSRPAUEW keep state # @PORT_USER_RSYNC
-pass out quick on en0 inet proto tcp from (en0) port $sports to { <portrsync> } port { 873 } user 502 flags S/FSRPAUEW keep state # @PORT_USER_RSYNC # @IF_en0
+#pass out quick on en0 inet proto tcp from (en0) port $sports to { <portrsync> } port { 873 } user 502 flags S/FSRPAUEW keep state # @PORT_USER_RSYNC # @IF_en0
 #### END OF KEEP STATE
 
 ######## END OF RULES

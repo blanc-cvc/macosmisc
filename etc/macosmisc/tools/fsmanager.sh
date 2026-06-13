@@ -2,9 +2,9 @@
 
 FS_ACTION=""
 
-#SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # sourced functions start with _
-#source "$SCRIPT_DIR/utils.sh"
+source "$SCRIPT_DIR/utils.sh"
 
 
 while [[ "$#" -gt 0 ]]; do
@@ -31,12 +31,28 @@ fi
 if [ "$FS_ACTION" == "FIXPERMS" ]; then
     /bin/rm -rf /var/root/Library >/dev/null 2>&1
     /bin/chmod 0500 /var/root >/dev/null 2>&1
-    /bin/chmod -R a-s /Users 
-    /bin/chmod -R a-s /Applications
-    /usr/sbin/chown -R root:wheel /Applications/*
+    /bin/chmod -R a-s /Users >/dev/null 2>&1
+    /bin/chmod -R a-s /Applications >/dev/null 2>&1
+    /usr/sbin/chown -R root:wheel /Applications/* >/dev/null 2>&1
+    find / -type d -name ".BAK" -exec chmod 0000 {} \; >/dev/null 2>&1
+    find / -type d -name ".BAK" -exec chown root:wheel {} \; >/dev/null 2>&1
 fi
 
 if [ "$FS_ACTION" == "FIXMOUNT" ]; then
+    auto_master_file="/etc/auto_master"
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        read -r col1 col2 col3 rest <<< "$line"
+        if [[ "$col1" == "/"* ]] || [[ "$col1" == "#/"* ]]; then
+            echo "$col1 $col2 -nobrowse,hidefromfinder,nosuid,nodev,noexec,noauto" >> "$auto_master_file.new"
+        else
+            echo "$line" >> "$auto_master_file.new"
+        fi
+    done < "$auto_master_file"
+    if [ ! -f "$auto_master_file.bak" ]; then
+        mv "$auto_master_file" "$auto_master_file.bak"
+    fi
+    mv "$auto_master_file.new" "$auto_master_file"
+    sed -i '' 's/^AUTOMOUNTD_MNTOPTS=.*/AUTOMOUNTD_MNTOPTS=nosuid,nodev,noexec,noauto/' /etc/autofs.conf
     mount | while IFS= read -r line; do
         if [[ "$line" == /dev/* ]]; then
             DEVICE=$(echo "$line" | awk '{print $1}')
@@ -52,4 +68,46 @@ if [ "$FS_ACTION" == "FIXMOUNT" ]; then
             fi
         fi
     done
+fi
+
+if [ "$FS_ACTION" == "LIMITPAM" ]; then
+    _utils_prevent_sleep_askforpass
+    _utils_pmset # prevent sleep and more
+    SOURCE_DIR="/etc/pam.d"
+    EXCLUDED_FILES=("authorization" "login" "login.term" "other" "sudo")
+    if [ ! -d "$SOURCE_DIR/.BAK" ]; then
+        mkdir "$SOURCE_DIR/.BAK"
+    fi
+    for file in "$SOURCE_DIR"/*; do
+        if [ -f "$file" ]; then
+            if ! _utils_is_included $(basename "$file") "${EXCLUDED_FILES[@]}"; then
+                mv "$file" "$SOURCE_DIR/.BAK/"
+            else
+                if grep -q "nullok" "$file"; then
+                    while IFS= read -r line || [[ -n "$line" ]]; do
+                        if [[ "$line" == *"nullok"* ]] && [[ ! "$line" == \#* ]]; then
+                            echo "#$line" >> "$file.new"
+                            new_line=$(echo "$line" | sed 's/ nullok\([^a-zA-Z0-9_]\)/\1/g; s/ nullok$//')
+                            echo "$new_line" >> "$file.new"
+                        else
+                            echo "$line" >> "$file.new"
+                        fi
+                    done < "$file"
+                    if [ ! -f "$SOURCE_DIR/.BAK/$(basename $file)" ]; then
+                        mv "$file" "$SOURCE_DIR/.BAK/"
+                    fi
+                    mv "$file.new" "$file"
+                fi
+            fi
+        fi
+    done
+    chmod 0000 "$SOURCE_DIR/.BAK"
+    chown root:wheel "$SOURCE_DIR/.BAK"
+fi
+
+# move pam files before editing or adding a user
+if [ "$FS_ACTION" == "BEFOREEDITNEWUSERPAM" ]; then
+    mv "/etc/pam.d/.BAK/chkpasswd" "/etc/pam.d/"
+    mv "/etc/pam.d/.BAK/checkpw" "/etc/pam.d/"
+    mv "/etc/pam.d/.BAK/passwd" "/etc/pam.d/"
 fi

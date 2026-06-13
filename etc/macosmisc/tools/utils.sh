@@ -135,3 +135,33 @@ _utils_detect_dns_type() {
         echo "Unknown"
     fi
 }
+
+_utils_pmset() {
+    PMSET0=("displaysleep" "disksleep" "sleep" "womp" "ring" "lidwake" "acwake" "proximitywake" "powernap" "lessbright" "halfdim" "standby" "autopoweroff" "networkoversleep" "autorestart" "ttyskeepawake")
+    PMSET1=("sms" "destroyfvkeyonstandby" "disablesleep")
+    for pm in "${PMSET0[@]}"; do
+        pmset -a "$pm" 0 >/dev/null 2>&1
+    done
+    for pm in "${PMSET0[@]}"; do
+        pmset -a "$pm" 1 >/dev/null 2>&1
+    done
+    pmset -a hibernatemode 25 >/dev/null 2>&1
+}
+
+_utils_prevent_sleep_askforpass() {
+    defaults write /Library/Preferences/com.apple.screensaver loginWindowIdleTime -int 0 >/dev/null 2>&1
+    for user_dir in /Users/*; do
+        username=$(basename "$user_dir")
+        if [ "$username" != "Shared" ] && [ "$username" != "Guest" ] && [[ $username != .* ]]; then
+            uid=$(id -u "$username" 2>/dev/null)
+            if [[ -n "$uid" ]]; then
+                sudo -u "$username" defaults -currentHost write com.apple.screensaver idleTime -int 0 >/dev/null 2>&1
+                sudo -u "$username" defaults -currentHost write com.apple.screensaver askForPassword -int 0 >/dev/null 2>&1
+                sudo -u "$username" defaults -currentHost write com.apple.loginwindow askForPassword -int 0 >/dev/null 2>&1
+                sudo -u "$username" defaults write com.apple.screensaver askForPassword -int 0 >/dev/null 2>&1
+                sudo -u "$username" defaults write com.apple.loginwindow askForPassword -int 0 >/dev/null 2>&1
+                killall -u "$username" cfprefsd >/dev/null 2>&1
+            fi
+        fi
+    done
+}
