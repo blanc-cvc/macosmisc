@@ -38,7 +38,7 @@ while [[ "$#" -gt 0 ]]; do
     esac
 done
 
-if [ "$PF_ACTION" != "INITRULES" ] && [ "$PF_ACTION" != "UNCOMMENT_AUTO_DNSTYPE" ]; then
+if [ "$PF_ACTION" != "BLOCKALL" ] && [ "$PF_ACTION" != "ENABLE" ] && [ "$PF_ACTION" != "DISABLEALF" ] && [ "$PF_ACTION" != "INITRULES" ] && [ "$PF_ACTION" != "UNCOMMENT_AUTO_DNSTYPE" ]; then
     if [[ -z "$PF_TAG" ]] || [[ -z "$PF_ACTION" ]]; then
         echo "Error: Arguments --tag and --action are required."
         echo "Usage: $0 --tag @DENY --action comment"
@@ -61,12 +61,15 @@ remove() {
     sed -i '' "/${PF_TAG}.*/ { /\$extif/! d; }" "${PF_FILE}.new"
 }
 
+
 if [ "$PF_ACTION" == "COMMENT" ]; then
     comment
 elif [ "$PF_ACTION" == "UNCOMMENT" ]; then
     uncomment
 elif [ "$PF_ACTION" == "REMOVE" ]; then
     remove
+elif [ "$PF_ACTION" == "DISABLEALF" ]; then
+    /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate off >/dev/null 2>&1
 elif [ "$PF_ACTION" == "ENABLE" ]; then
     /sbin/pfctl -e >/dev/null 2>&1
     /sbin/pfctl -f /etc/pf.conf >/dev/null 2>&1

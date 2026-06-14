@@ -12,6 +12,7 @@ _job() {
         JOB_DONE="false"
         #
         /bin/bash /etc/macosmisc/tools/pfmanager.sh --action ENABLE >/dev/null 2>&1
+        /bin/bash /etc/macosmisc/tools/pfmanager.sh --action DISABLEALF >/dev/null 2>&1
         /bin/bash /etc/macosmisc/tools/ifmanager.sh --action AIRPORTPREFS --include wifi >/dev/null 2>&1
         #
         JOB_DONE="true"

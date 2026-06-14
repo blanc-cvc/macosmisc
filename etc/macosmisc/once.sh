@@ -1,4 +1,5 @@
 /bin/bash /etc/macosmisc/tools/pfmanager.sh --action ENABLE >/dev/null 2>&1
+/bin/bash /etc/macosmisc/tools/pfmanager.sh --action DISABLEALF >/dev/null 2>&1
 /bin/bash /etc/macosmisc/tools/ifmanager.sh --action RANDOM_MAC --include hardware >/dev/null 2>&1
 /bin/bash /etc/macosmisc/tools/ifmanager.sh --action DOWN --exclude none >/dev/null 2>&1
 /bin/bash /etc/macosmisc/tools/ifmanager.sh --action CHAOS --exclude hardware >/dev/null 2>&1
