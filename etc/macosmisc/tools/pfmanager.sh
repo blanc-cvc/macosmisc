@@ -24,8 +24,7 @@ while [[ "$#" -gt 0 ]]; do
     case $1 in
         --tag)
             PF_TAG="$2"
-            PF_TAG="@${PF_TAG#@}"
-            PF_TAG=$(echo "$PF_TAG" | awk '{print toupper($0)}')
+            IFS=',' read -ra PF_TAG <<< "$PF_TAG"
             shift 2 ;;
         --action)
             PF_ACTION="$2"
@@ -38,7 +37,7 @@ while [[ "$#" -gt 0 ]]; do
     esac
 done
 
-if [ "$PF_ACTION" != "BLOCKALL" ] && [ "$PF_ACTION" != "ENABLE" ] && [ "$PF_ACTION" != "DISABLEALF" ] && [ "$PF_ACTION" != "INITRULES" ] && [ "$PF_ACTION" != "UNCOMMENT_AUTO_DNSTYPE" ]; then
+if [ "$PF_ACTION" == "COMMENT" ] || [ "$PF_ACTION" == "UNCOMMENT" ]; then
     if [[ -z "$PF_TAG" ]] || [[ -z "$PF_ACTION" ]]; then
         echo "Error: Arguments --tag and --action are required."
         echo "Usage: $0 --tag @DENY --action comment"
@@ -46,16 +45,53 @@ if [ "$PF_ACTION" != "BLOCKALL" ] && [ "$PF_ACTION" != "ENABLE" ] && [ "$PF_ACTI
     fi
 fi
 
+check_line_has_all_tags() {
+    local line="$1"
+    shift
+    local tags=("$@")
+    for tag in "${tags[@]}"; do
+        if [[ "$line" != *"$tag"* ]]; then
+            return 1
+        fi
+    done
+    return 0
+}
 
 ##
 
 cp "$PF_FILE" "${PF_FILE}.new"
 
 comment() {
-    sed -i '' "/^[^#].*${PF_TAG}.*/ s/^/#/" "${PF_FILE}.new"
+    if [[ ${#PF_TAG[@]} -eq 1 ]]; then
+        sed -i '' "/^[^#].*${PF_TAG}.*/ s/^/#/" "${PF_FILE}.new"
+    else
+        rm "${PF_FILE}.new"
+        while IFS= read -r line || [[ -n "$line" ]]; do
+            if check_line_has_all_tags "$line" "${PF_TAG[@]}"; then
+                if [[ ! "$line" =~ ^# ]]; then
+                    echo "#$line" >> "${PF_FILE}.new"
+                fi
+            else
+                echo "$line" >> "${PF_FILE}.new"
+            fi
+        done < "${PF_FILE}"
+    fi
 }
 uncomment() {
-    sed -i '' "/^#.*${PF_TAG}.*/ { /\$extif/! s/^#[[:space:]]*//; }" "${PF_FILE}.new"
+    if [[ ${#PF_TAG[@]} -eq 1 ]]; then
+        sed -i '' "/^#.*${PF_TAG}.*/ { /\$extif/! s/^#[[:space:]]*//; }" "${PF_FILE}.new"
+    else
+        rm "${PF_FILE}.new"
+        while IFS= read -r line || [[ -n "$line" ]]; do
+            if check_line_has_all_tags "$line" "${PF_TAG[@]}"; then
+                if [[ "$line" =~ ^# ]]; then
+                    echo "${line#\#}" >> "${PF_FILE}.new"
+                fi
+            else
+                echo "$line" >> "${PF_FILE}.new"
+            fi
+        done < "${PF_FILE}"
+    fi
 }
 remove() {
     sed -i '' "/${PF_TAG}.*/ { /\$extif/! d; }" "${PF_FILE}.new"

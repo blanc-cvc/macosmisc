@@ -15,13 +15,9 @@ _job() {
         /bin/bash /etc/macosmisc/tools/pfmanager.sh --action UNCOMMENT --tag @DNS_DOT >/dev/null 2>&1
         /bin/bash /etc/macosmisc/tools/pfmanager.sh --action UNCOMMENT --tag @USER_ >/dev/null 2>&1
         /bin/bash /etc/macosmisc/tools/pfmanager.sh --action UNCOMMENT --tag @PORT_ >/dev/null 2>&1
-        /bin/bash /etc/macosmisc/tools/ifobserver.sh --interface en0 >/dev/null 2>&1 # TODO
+        /bin/bash /etc/macosmisc/tools/ifobserver.sh --action WATCHDHCP --interface hardware >/dev/null 2>&1
         /bin/bash /etc/macosmisc/tools/ifmanager.sh --action UP --include hardware >/dev/null 2>&1
         /bin/bash /etc/macosmisc/tools/ifmanager.sh --action CHAOS --exclude hardware >/dev/null 2>&1
-        /usr/bin/killall -KILL -c replicatord >/dev/null 2>&1
-        /usr/bin/killall -KILL -c homed >/dev/null 2>&1
-        #dscacheutil -flushcache
-        #killall -HUP mDNSResponder
         #
         JOB_DONE="true"
     fi

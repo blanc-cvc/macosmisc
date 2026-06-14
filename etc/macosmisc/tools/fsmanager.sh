@@ -120,3 +120,29 @@ if [ "$FS_ACTION" == "SETUMASK" ]; then
     launchctl config system umask 027 >/dev/null 2>&1
 fi
 
+if [ "$FS_ACTION" == "SETRESOLVER" ]; then
+    if [ ! -d /etc/resolver ]; then
+        mkdir /etc/resolver
+        chmod 0755 /etc/resolver
+        chown root:wheel /etc/resolver
+    fi
+    RESOLVERS=("arpa" "example" "home" "internal" "invalid" "lan" "local" "localhost" "private" "test")
+    for resolver_tld in "${RESOLVERS[@]}"; do
+        echo "nameserver 127.0.0.1" > "/etc/resolver/$resolver_tld"
+    done
+    chmod 0644 /etc/resolver/*
+    chown root:wheel /etc/resolver/*
+fi
+
+if [ "$FS_ACTION" == "PASSWDNOSH" ]; then
+    sed -i '' 's|/bin/sh|/usr/bin/false|g' /etc/master.passwd
+    sed -i '' 's|/usr/sbin/uucico|/usr/bin/false|g' /etc/master.passwd
+    sed -i '' 's|/bin/bash|/usr/bin/false|g' /etc/master.passwd
+    sed -i '' 's|/bin/sh|/usr/bin/false|g' /etc/passwd
+    sed -i '' 's|/usr/sbin/uucico|/usr/bin/false|g' /etc/passwd
+    sed -i '' 's|/bin/bash|/usr/bin/false|g' /etc/passwd
+fi
+
+if [ "$FS_ACTION" == "CUPSNONET" ]; then
+    sed -i '' '/Listen localhost/ { /^[[:space:]]*#/! s/^/#/; }' /etc/cups/cupsd.conf   
+fi

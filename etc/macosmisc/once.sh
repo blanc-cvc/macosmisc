@@ -8,4 +8,7 @@
 /bin/bash /etc/macosmisc/tools/fsmanager.sh --action FIXMOUNT >/dev/null 2>&1
 /bin/bash /etc/macosmisc/tools/fsmanager.sh --action LIMITPAM >/dev/null 2>&1
 /bin/bash /etc/macosmisc/tools/fsmanager.sh --action SETUMASK >/dev/null 2>&1
+/bin/bash /etc/macosmisc/tools/fsmanager.sh --action SETRESOLVER >/dev/null 2>&1
+/bin/bash /etc/macosmisc/tools/fsmanager.sh --action PASSWDNOSH >/dev/null 2>&1
+/bin/bash /etc/macosmisc/tools/fsmanager.sh --action CUPSNONET >/dev/null 2>&1
 exit 0

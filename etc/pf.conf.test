@@ -27,11 +27,11 @@ block in  quick from { <bogons> }
 ######## RULES
 
 #### NO STATE
-## DHCP user root
+## DHCP user root (?replace !<private> by { 0.0.0.0, 169.254/16, 255.255.255.255 })
 #pass out quick on $extif inet proto udp from { 0.0.0.0, 169.254/16 } port 68 to <private> port 67 user 0 no state # @DHCP_OUT
 #pass out quick on en0 inet proto udp from { 0.0.0.0, 169.254/16 } port 68 to <private> port 67 user 0 no state # @DHCP_OUT # @IF_en0
-#pass in  quick on $extif inet proto udp from <private> port 67 to !<private> port 68 no state # @DHCP_IN # ?replace !<private> by { 0.0.0.0, 169.254/16, 255.255.255.255 }
-#pass in  quick on en0 inet proto udp from <private> port 67 to !<private> port 68 no state # @DHCP_IN # ?replace !<private> by { 0.0.0.0, 169.254/16, 255.255.255.255 } # @IF_en0
+#pass in  quick on $extif inet proto udp from <private> port 67 to !<private> port 68 no state # @DHCP_IN
+#pass in  quick on en0 inet proto udp from <private> port 67 to !<private> port 68 no state # @DHCP_IN # @IF_en0
 #### BLOCK QUICK NO STATE 1
 block out quick to { <private> }
 ## ICMP
