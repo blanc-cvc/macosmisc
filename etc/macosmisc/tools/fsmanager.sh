@@ -111,3 +111,12 @@ if [ "$FS_ACTION" == "BEFOREEDITNEWUSERPAM" ]; then
     mv "/etc/pam.d/.BAK/checkpw" "/etc/pam.d/"
     mv "/etc/pam.d/.BAK/passwd" "/etc/pam.d/"
 fi
+
+if [ "$FS_ACTION" == "SETUMASK" ]; then
+    echo "umask 027" > /etc/launchd.conf
+    chmod 0755 /etc/launchd.conf
+    chown root:wheel /etc/launchd.conf
+    launchctl config user umask 027 >/dev/null 2>&1
+    launchctl config system umask 027 >/dev/null 2>&1
+fi
+

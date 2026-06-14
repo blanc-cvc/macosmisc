@@ -11,6 +11,7 @@ _shutdown() {
     /bin/bash /etc/macosmisc/tools/pfmanager.sh --action BLOCKALL >/dev/null 2>&1
     /bin/bash /etc/macosmisc/tools/ifmanager.sh --action CHAOS --exclude none >/dev/null 2>&1
     /bin/bash /etc/macosmisc/tools/ifmanager.sh --action DOWN --exclude none >/dev/null 2>&1
+    /bin/bash /etc/macosmisc/tools/fsmanager.sh --action SETUMASK >/dev/null 2>&1
     /usr/bin/find / -type d -name "Caches" -delete >/dev/null 2>&1
 }
 trap _keepalive SIGINT

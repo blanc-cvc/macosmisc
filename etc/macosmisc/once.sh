@@ -6,4 +6,5 @@
 /bin/bash /etc/macosmisc/tools/fsmanager.sh --action FIXPERMS >/dev/null 2>&1
 /bin/bash /etc/macosmisc/tools/fsmanager.sh --action FIXMOUNT >/dev/null 2>&1
 /bin/bash /etc/macosmisc/tools/fsmanager.sh --action LIMITPAM >/dev/null 2>&1
+/bin/bash /etc/macosmisc/tools/fsmanager.sh --action SETUMASK >/dev/null 2>&1
 exit 0
