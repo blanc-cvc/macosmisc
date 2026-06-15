@@ -199,9 +199,12 @@ if [ "$IFS_ACTION" == "CHAOS" ]; then
             /Device/ && $2==dev {print port; exit}
         ')
         if [ -n "$PORT_NAME" ]; then
+            echo "$(date +%H:%M:%S) ifmanager: set interface:$INTERFACE v6off" >> "$LOG_FILE"
             networksetup -setv6off "$PORT_NAME" >/dev/null 2>&1 # apply to every ports
             if { [[ -n "$IFS_EXCLUDED" ]] && ! _utils_is_included "$INTERFACE" "${IFS_EXCLUDED[@]}"; } || \
                { [[ -n "$IFS_INCLUDED" ]] && _utils_is_included "$INTERFACE" "${IFS_INCLUDED[@]}"; }; then
+                # check bug en0 seems to enter
+                echo "$(date +%H:%M:%S) ifmanager: set interface:$INTERFACE v4off and disabled" >> "$LOG_FILE"
                 networksetup -setv4off "$PORT_NAME" >/dev/null 2>&1
                 networksetup -setnetworkserviceenabled "$PORT_NAME" off >/dev/null 2>&1
             fi

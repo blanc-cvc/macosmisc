@@ -88,7 +88,9 @@ check_line_has_all_tags() {
 
 ##
 
-cp "$PF_FILE" "${PF_FILE}.new"
+if [ "$PF_ACTION" != "BLOCKALL" ] && [ "$PF_ACTION" != "DISABLEALF" ] && [ "$PF_ACTION" != "ENABLE" ]; then
+    cp "$PF_FILE" "${PF_FILE}.new"
+fi
 
 comment() {
     if [[ ${#PF_TAG[@]} -eq 1 ]]; then
@@ -146,14 +148,17 @@ elif [ "$PF_ACTION" == "REMOVE" ]; then
 elif [ "$PF_ACTION" == "DISABLEALF" ]; then
     echo "$(date +%H:%M:%S) pfmanager: DISABLEALF" >> "$LOG_FILE"
     /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate off >/dev/null 2>&1
+    exit 0
 elif [ "$PF_ACTION" == "ENABLE" ]; then
     echo "$(date +%H:%M:%S) pfmanager: ENABLE" >> "$LOG_FILE"
     /sbin/pfctl -e >/dev/null 2>&1
     /sbin/pfctl -f /etc/pf.conf >/dev/null 2>&1
+    exit 0
 elif [ "$PF_ACTION" == "BLOCKALL" ]; then
     echo "$(date +%H:%M:%S) pfmanager: BLOCKALL" >> "$LOG_FILE"
     /sbin/pfctl -e >/dev/null 2>&1
     /sbin/pfctl -f /etc/pf.blockall.conf >/dev/null 2>&1
+    exit 0
 elif [ "$PF_ACTION" == "INITRULES" ]; then
     # priority
     echo "$(date +%H:%M:%S) pfmanager: INITRULES" >> "$LOG_FILE"

@@ -7,10 +7,10 @@ _keepalive() {
     exit 0
 }
 _shutdown() {
-    for log in "off" "1s" "2s" "10s" "1m" "1h" "1d" "once"; do
-        echo "" > "/etc/macosmisc/logs/$log.log"
-    done
     if [ ! -f "/etc/macosmisc/off.install.lock" ]; then
+        for log in "off" "1s" "2s" "10s" "1m" "1h" "1d" "once"; do
+            echo "" > "/etc/macosmisc/logs/$log.log"
+        done
         /bin/bash /etc/macosmisc/tools/pfmanager.sh --action REMOVE --tag @IF_ --log off
         /bin/bash /etc/macosmisc/tools/pfmanager.sh --action BLOCKALL --log off
         /bin/bash /etc/macosmisc/tools/ifmanager.sh --action CHAOS --exclude none --log off

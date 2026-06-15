@@ -1,3 +1,4 @@
+touch /etc/pf.conf.lock # to facilitate INITRULES
 /bin/bash /etc/macosmisc/tools/pfmanager.sh --action ENABLE --log once
 /bin/bash /etc/macosmisc/tools/pfmanager.sh --action DISABLEALF --log once
 /bin/bash /etc/macosmisc/tools/ifmanager.sh --action RANDOM_MAC --include hardware --log once
