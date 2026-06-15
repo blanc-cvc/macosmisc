@@ -1,5 +1,6 @@
 #!/bin/bash
 
+LOG_FILE=""
 IFS_ACTION=""
 IFS_EXCLUDED=()
 IFS_INCLUDED=()
@@ -14,6 +15,12 @@ source "$SCRIPT_DIR/utils.sh"
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
+        --log)
+            LOG_FILE="$2"
+            if [ "$LOG_FILE" != "/dev/null" ]; then
+                LOG_FILE="$SCRIPT_DIR/../logs/$LOG_FILE.log"
+            fi
+            shift 2 ;;
         --include)
             IFS_INCLUDED=$(echo "$2" | awk '{print tolower($0)}')
             IFS=',' read -ra IFS_INCLUDED <<< "$IFS_INCLUDED"
@@ -27,8 +34,6 @@ while [[ "$#" -gt 0 ]]; do
             [ "$IFS_EXCLUDED" == "hardware" ] && _utils_wifi_ethernet_interfaces "IFS_EXCLUDED"
             [ "$IFS_EXCLUDED" == "wifi" ] && _utils_wifi_ethernet_interfaces "IFS_EXCLUDED" "wifi"
             [ "$IFS_EXCLUDED" == "ethernet" ] && _utils_wifi_ethernet_interfaces "IFS_EXCLUDED" "ethernet"
-            echo "${IFS_EXCLUDED[@]}"
-            exit 0
             shift 2 ;;
         --action)
             IFS_ACTION="$2"
@@ -40,6 +45,10 @@ while [[ "$#" -gt 0 ]]; do
             exit 1 ;;
     esac
 done
+
+if [[ -z "$LOG_FILE" ]]; then
+    LOG_FILE="/dev/null"
+fi
 
 if [[ -z "$IFS_ACTION" ]] || \
    { [[ -z "$IFS_EXCLUDED" ]] && [[ -z "$IFS_INCLUDED" ]]; } || \
@@ -56,10 +65,13 @@ fi
 set_new_ip_mac_of_if() {
     local ip=$(_utils_generate_random_private_ip)
     local mac=$(_utils_generate_random_mac)
+    local netmask=$(_utils_generate_random_netmask)
     if ! _utils_is_included "$ip" "${RANDOM_IPS_EXCLUDED[@]}"; then
-        ifconfig $1 $ip netmask $(_utils_generate_random_netmask) >/dev/null 2>&1
+        echo "$(date +%H:%M:%S) ifmanager: set interface:$1 ip:$ip netmask:$netmask" >> "$LOG_FILE"
+        ifconfig $1 $ip netmask $netmask >/dev/null 2>&1
     fi
     if ! _utils_is_included "$mac" "${RANDOM_MAC_EXCLUDED[@]}"; then
+        echo "$(date +%H:%M:%S) ifmanager: set interface:$1 mac:$mac" >> "$LOG_FILE"
         ifconfig $1 lladdr $mac >/dev/null 2>&1
     fi
 }
@@ -85,6 +97,7 @@ if [ "$IFS_ACTION" == "AIRPORTPREFS" ]; then
                 "RequireAdminIBSS=YES"
             )
 
+            echo "$(date +%H:%M:%S) ifmanager: set interface:$iface airportd prefs" >> "$LOG_FILE"
             for pref in "${prefs[@]}"; do
                 /usr/libexec/airportd "$iface" prefs "$pref" >/dev/null 2>&1
             done
@@ -97,10 +110,12 @@ if [ "$IFS_ACTION" == "RANDOM_MAC" ]; then
     for INTERFACE in $INTERFACES; do
         if { [[ -n "$IFS_EXCLUDED" ]] && ! _utils_is_included "$INTERFACE" "${IFS_EXCLUDED[@]}"; } || \
            { [[ -n "$IFS_INCLUDED" ]] && _utils_is_included "$INTERFACE" "${IFS_INCLUDED[@]}"; }; then
+            mac=$(_utils_generate_random_mac)
+            echo "$(date +%H:%M:%S) ifmanager: set interface:$INTERFACE mac:$mac" >> "$LOG_FILE"
             ifconfig $INTERFACE down >/dev/null 2>&1
-            ifconfig $INTERFACE lladdr $(_utils_generate_random_mac) >/dev/null 2>&1
+            ifconfig $INTERFACE lladdr $mac >/dev/null 2>&1
             ifconfig $INTERFACE up >/dev/null 2>&1
-            ifconfig $INTERFACE lladdr $(_utils_generate_random_mac) >/dev/null 2>&1
+            ifconfig $INTERFACE lladdr $mac >/dev/null 2>&1
             ifconfig $INTERFACE down >/dev/null 2>&1
         fi
     done
@@ -111,6 +126,7 @@ if [ "$IFS_ACTION" == "UP" ]; then
     for INTERFACE in $INTERFACES; do
         if { [[ -n "$IFS_EXCLUDED" ]] && ! _utils_is_included "$INTERFACE" "${IFS_EXCLUDED[@]}"; } || \
            { [[ -n "$IFS_INCLUDED" ]] && _utils_is_included "$INTERFACE" "${IFS_INCLUDED[@]}"; }; then
+            echo "$(date +%H:%M:%S) ifmanager: set interface:$INTERFACE up" >> "$LOG_FILE"
             ifconfig $INTERFACE up >/dev/null 2>&1
             PORT_NAME=$(networksetup -listallhardwareports | awk -v dev="$INTERFACE" '
                 /Hardware Port/ {port=$3; for(i=4; i<=NF; i++) port=port " " $i}
@@ -128,6 +144,7 @@ if [ "$IFS_ACTION" == "DOWN" ]; then
     for INTERFACE in $INTERFACES; do
         if { [[ -n "$IFS_EXCLUDED" ]] && ! _utils_is_included "$INTERFACE" "${IFS_EXCLUDED[@]}"; } || \
            { [[ -n "$IFS_INCLUDED" ]] && _utils_is_included "$INTERFACE" "${IFS_INCLUDED[@]}"; }; then
+            echo "$(date +%H:%M:%S) ifmanager: set interface:$INTERFACE down" >> "$LOG_FILE"
             ifconfig $INTERFACE down >/dev/null 2>&1
             PORT_NAME=$(networksetup -listallhardwareports | awk -v dev="$INTERFACE" '
                 /Hardware Port/ {port=$3; for(i=4; i<=NF; i++) port=port " " $i}
@@ -162,6 +179,7 @@ if [ "$IFS_ACTION" == "CHAOS" ]; then
         else
             if { [[ -n "$IFS_EXCLUDED" ]] && ! _utils_is_included "$INTERFACE" "${IFS_EXCLUDED[@]}"; } || \
                { [[ -n "$IFS_INCLUDED" ]] && _utils_is_included "$INTERFACE" "${IFS_INCLUDED[@]}"; }; then
+                echo "$(date +%H:%M:%S) ifmanager: set interface:$INTERFACE chaos" >> "$LOG_FILE"
                 ifconfig $INTERFACE down >/dev/null 2>&1
                 set_new_ip_mac_of_if $INTERFACE
                 ifconfig $INTERFACE -rxcsum -txcsum -tso -lro >/dev/null 2>&1

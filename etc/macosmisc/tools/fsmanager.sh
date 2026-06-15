@@ -1,5 +1,6 @@
 #!/bin/bash
 
+LOG_FILE=""
 FS_ACTION=""
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -9,6 +10,12 @@ source "$SCRIPT_DIR/utils.sh"
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
+        --log)
+            LOG_FILE="$2"
+            if [ "$LOG_FILE" != "/dev/null" ]; then
+                LOG_FILE="$SCRIPT_DIR/../logs/$LOG_FILE.log"
+            fi
+            shift 2 ;;
         --action)
             FS_ACTION="$2"
             FS_ACTION=$(echo "$FS_ACTION" | awk '{print toupper($0)}')
@@ -20,6 +27,10 @@ while [[ "$#" -gt 0 ]]; do
     esac
 done
 
+if [[ -z "$LOG_FILE" ]]; then
+    LOG_FILE="/dev/null"
+fi
+
 if [[ -z "$FS_ACTION" ]]; then
     echo "Usage: $0 --action <action>"
     exit 1
@@ -29,16 +40,23 @@ fi
 ##
 
 if [ "$FS_ACTION" == "FIXPERMS" ]; then
+    echo "$(date +%H:%M:%S) fsmanager: FIXPERMS" >> "$LOG_FILE"
     /bin/rm -rf /var/root/Library >/dev/null 2>&1
     /bin/chmod 0500 /var/root >/dev/null 2>&1
     /bin/chmod -R a-s /Users >/dev/null 2>&1
     /bin/chmod -R a-s /Applications >/dev/null 2>&1
     /usr/sbin/chown -R root:wheel /Applications/* >/dev/null 2>&1
+    chmod 0640 /etc/pf.* >/dev/null 2>&1
+    chmod 0750 /etc/macosmisc/*.sh >/dev/null 2>&1
+    chmod 0750 /etc/macosmisc/tools/*.sh >/dev/null 2>&1
+    chmod 0644 /etc/macosmisc/logs/*.log >/dev/null 2>&1
+    echo "$(date +%H:%M:%S) fsmanager: finding .BAK folders, it’s going to take a while.." >> "$LOG_FILE"
     find / -type d -name ".BAK" -exec chmod 0000 {} \; >/dev/null 2>&1
     find / -type d -name ".BAK" -exec chown root:wheel {} \; >/dev/null 2>&1
 fi
 
 if [ "$FS_ACTION" == "FIXMOUNT" ]; then
+    echo "$(date +%H:%M:%S) fsmanager: FIXMOUNT" >> "$LOG_FILE"
     auto_master_file="/etc/auto_master"
     while IFS= read -r line || [[ -n "$line" ]]; do
         read -r col1 col2 col3 rest <<< "$line"
@@ -59,18 +77,19 @@ if [ "$FS_ACTION" == "FIXMOUNT" ]; then
             MOUNT_POINT=$(echo "$line" | awk '{print $3}')
             if [[ "$MOUNT_POINT" == /System/Volumes/* ]]; then
                 if [ "$MOUNT_POINT" == "/System/Volumes/Data" ]; then # without noexec
-                    /sbin/mount -u -o noauto,nodev,nosuid,noatime,nobrowse -t $FS_TYPE $DEVICE $MOUNT_POINT >/dev/null 2>&1
+                    /sbin/mount -u -o noauto,nodev,nosuid,noatime,nobrowse -t $FS_TYPE $DEVICE $MOUNT_POINT >> "$LOG_FILE"
                 else
-                    /sbin/mount -u -o noauto,nodev,nosuid,noexec,noatime,nobrowse -t $FS_TYPE $DEVICE $MOUNT_POINT >/dev/null 2>&1
+                    /sbin/mount -u -o noauto,nodev,nosuid,noexec,noatime,nobrowse -t $FS_TYPE $DEVICE $MOUNT_POINT >> "$LOG_FILE"
                 fi
             elif [[ "$MOUNT_POINT" == /Volumes/* ]]; then # without nobrowse
-                /sbin/mount -u -o noauto,nodev,nosuid,noexec,noatime -t $FS_TYPE $DEVICE $MOUNT_POINT >/dev/null 2>&1
+                /sbin/mount -u -o noauto,nodev,nosuid,noexec,noatime -t $FS_TYPE $DEVICE $MOUNT_POINT >> "$LOG_FILE"
             fi
         fi
     done
 fi
 
 if [ "$FS_ACTION" == "LIMITPAM" ]; then
+    echo "$(date +%H:%M:%S) fsmanager: LIMITPAM" >> "$LOG_FILE"
     _utils_prevent_sleep_askforpass
     _utils_pmset # prevent sleep and more
     SOURCE_DIR="/etc/pam.d"
@@ -107,20 +126,23 @@ fi
 
 # move pam files before editing or adding a user
 if [ "$FS_ACTION" == "BEFOREEDITNEWUSERPAM" ]; then
+    echo "$(date +%H:%M:%S) fsmanager: BEFOREEDITNEWUSERPAM" >> "$LOG_FILE"
     mv "/etc/pam.d/.BAK/chkpasswd" "/etc/pam.d/"
     mv "/etc/pam.d/.BAK/checkpw" "/etc/pam.d/"
     mv "/etc/pam.d/.BAK/passwd" "/etc/pam.d/"
 fi
 
 if [ "$FS_ACTION" == "SETUMASK" ]; then
+    echo "$(date +%H:%M:%S) fsmanager: SETUMASK" >> "$LOG_FILE"
     echo "umask 027" > /etc/launchd.conf
     chmod 0755 /etc/launchd.conf
     chown root:wheel /etc/launchd.conf
-    launchctl config user umask 027 >/dev/null 2>&1
-    launchctl config system umask 027 >/dev/null 2>&1
+    launchctl config user umask 027 >> "$LOG_FILE"
+    launchctl config system umask 027 >> "$LOG_FILE"
 fi
 
 if [ "$FS_ACTION" == "SETRESOLVER" ]; then
+    echo "$(date +%H:%M:%S) fsmanager: SETRESOLVER" >> "$LOG_FILE"
     if [ ! -d /etc/resolver ]; then
         mkdir /etc/resolver
         chmod 0755 /etc/resolver
@@ -135,6 +157,7 @@ if [ "$FS_ACTION" == "SETRESOLVER" ]; then
 fi
 
 if [ "$FS_ACTION" == "PASSWDNOSH" ]; then
+    echo "$(date +%H:%M:%S) fsmanager: PASSWDNOSH" >> "$LOG_FILE"
     sed -i '' 's|/bin/sh|/usr/bin/false|g' /etc/master.passwd
     sed -i '' 's|/usr/sbin/uucico|/usr/bin/false|g' /etc/master.passwd
     sed -i '' 's|/bin/bash|/usr/bin/false|g' /etc/master.passwd
@@ -144,5 +167,6 @@ if [ "$FS_ACTION" == "PASSWDNOSH" ]; then
 fi
 
 if [ "$FS_ACTION" == "CUPSNONET" ]; then
+    echo "$(date +%H:%M:%S) fsmanager: CUPSNONET" >> "$LOG_FILE"
     sed -i '' '/Listen localhost/ { /^[[:space:]]*#/! s/^/#/; }' /etc/cups/cupsd.conf   
 fi

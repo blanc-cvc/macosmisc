@@ -7,6 +7,7 @@ _keepalive() {
     exit 0
 }
 _job() {
+    echo "" > /etc/macosmisc/logs/1h.log
     /usr/bin/find / -type d -name "Caches" -delete >/dev/null 2>&1
 }
 trap _keepalive SIGINT SIGTERM

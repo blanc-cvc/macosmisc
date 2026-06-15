@@ -1,5 +1,6 @@
 #!/bin/bash
 
+LOG_FILE=""
 IFS_INCLUDED=""
 IFS_ACTION=""
 
@@ -9,6 +10,12 @@ source "$SCRIPT_DIR/utils.sh"
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
+        --log)
+            LOG_FILE="$2"
+            if [ "$LOG_FILE" != "/dev/null" ]; then
+                LOG_FILE="$SCRIPT_DIR/../logs/$LOG_FILE.log"
+            fi
+            shift 2 ;;
         --interface)
             IFS_INCLUDED=$(echo "$2" | awk '{print tolower($0)}')
             IFS=',' read -ra IFS_INCLUDED <<< "$IFS_INCLUDED"
@@ -27,6 +34,10 @@ while [[ "$#" -gt 0 ]]; do
     esac
 done
 
+if [[ -z "$LOG_FILE" ]]; then
+    LOG_FILE="/dev/null"
+fi
+
 if [[ -z "$IFS_INCLUDED" ]]; then
     echo "Error: Argument --interface is required."
     echo "Usage: $0 --interface en0"
@@ -37,6 +48,7 @@ fi
 ##
 
 if [ "$IFS_ACTION" == "WATCHDHCP" ]; then
+    echo "$(date +%H:%M:%S) ifobserver: WATCHDHCP" >> "$LOG_FILE"
     for iface in "${IFS_INCLUDED[@]}"; do
         MY_IP_IS_PRIVATE="false"
         MY_IP=$(ifconfig $iface | awk '/inet / {print $2}')
@@ -44,11 +56,11 @@ if [ "$IFS_ACTION" == "WATCHDHCP" ]; then
             MY_IP_IS_PRIVATE="true"
         fi
         if [ "$MY_IP_IS_PRIVATE" == "true" ]; then
-            /bin/bash "$SCRIPT_DIR/pfmanager.sh" --action COMMENT --tag "@DHCP_,@IF_$iface"
+            /bin/bash "$SCRIPT_DIR/pfmanager.sh" --action COMMENT --tag "@DHCP_,@IF_$iface" --log "$(basename "$LOG_FILE" .log)"
         else
-            /bin/bash "$SCRIPT_DIR/ifmanager.sh" --action RANDOM_MAC --include $iface
-            /bin/bash "$SCRIPT_DIR/ifmanager.sh" --action UP --include $iface
-            /bin/bash "$SCRIPT_DIR/pfmanager.sh" --action UNCOMMENT --tag "@DHCP_,@IF_$iface"
+            /bin/bash "$SCRIPT_DIR/ifmanager.sh" --action RANDOM_MAC --include $iface --log "$(basename "$LOG_FILE" .log)"
+            /bin/bash "$SCRIPT_DIR/ifmanager.sh" --action UP --include $iface --log "$(basename "$LOG_FILE" .log)"
+            /bin/bash "$SCRIPT_DIR/pfmanager.sh" --action UNCOMMENT --tag "@DHCP_,@IF_$iface" --log "$(basename "$LOG_FILE" .log)"
             if [[ "$MY_IP" =~ ^169\.254\. ]]; then
                 sleep 10
                 scutil --renew $iface >/dev/null 2>&1

@@ -11,13 +11,16 @@ _job() {
     if [ "$JOB_DONE" == "true" ]; then
         JOB_DONE="false"
         #
-        #/bin/bash /etc/macosmisc/tools/pfmanager.sh --action UNCOMMENT_AUTO_DNSTYPE >/dev/null 2>&1
-        /bin/bash /etc/macosmisc/tools/pfmanager.sh --action UNCOMMENT --tag @DNS_DOT >/dev/null 2>&1
-        /bin/bash /etc/macosmisc/tools/pfmanager.sh --action UNCOMMENT --tag @USER_ >/dev/null 2>&1
-        /bin/bash /etc/macosmisc/tools/pfmanager.sh --action UNCOMMENT --tag @PORT_ >/dev/null 2>&1
-        /bin/bash /etc/macosmisc/tools/ifobserver.sh --action WATCHDHCP --interface hardware >/dev/null 2>&1
-        /bin/bash /etc/macosmisc/tools/ifmanager.sh --action UP --include hardware >/dev/null 2>&1
-        /bin/bash /etc/macosmisc/tools/ifmanager.sh --action CHAOS --exclude hardware >/dev/null 2>&1
+        for log in "1s" "2s" "10s"; do
+            echo "" > "/etc/macosmisc/logs/$log.log"
+        done
+        #/bin/bash /etc/macosmisc/tools/pfmanager.sh --action UNCOMMENT_AUTO_DNSTYPE --log 1m
+        /bin/bash /etc/macosmisc/tools/pfmanager.sh --action UNCOMMENT --tag @DNS_DOT --log 1m
+        /bin/bash /etc/macosmisc/tools/pfmanager.sh --action UNCOMMENT --tag @USER_ --log 1m
+        /bin/bash /etc/macosmisc/tools/pfmanager.sh --action UNCOMMENT --tag @PORT_ --log 1m
+        /bin/bash /etc/macosmisc/tools/ifobserver.sh --action WATCHDHCP --interface hardware --log 1m
+        /bin/bash /etc/macosmisc/tools/ifmanager.sh --action UP --include hardware --log 1m
+        /bin/bash /etc/macosmisc/tools/ifmanager.sh --action CHAOS --exclude hardware --log 1m
         #
         JOB_DONE="true"
     fi

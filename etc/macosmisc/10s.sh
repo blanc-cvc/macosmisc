@@ -11,9 +11,9 @@ _job() {
     if [ "$JOB_DONE" == "true" ]; then
         JOB_DONE="false"
         #
-        /bin/bash /etc/macosmisc/tools/pfmanager.sh --action ENABLE >/dev/null 2>&1
-        /bin/bash /etc/macosmisc/tools/pfmanager.sh --action DISABLEALF >/dev/null 2>&1
-        /bin/bash /etc/macosmisc/tools/ifmanager.sh --action AIRPORTPREFS --include wifi >/dev/null 2>&1
+        /bin/bash /etc/macosmisc/tools/pfmanager.sh --action ENABLE --log 10s
+        /bin/bash /etc/macosmisc/tools/pfmanager.sh --action DISABLEALF --log 10s
+        /bin/bash /etc/macosmisc/tools/ifmanager.sh --action AIRPORTPREFS --include wifi --log 10s
         #
         JOB_DONE="true"
     fi

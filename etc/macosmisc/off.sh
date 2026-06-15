@@ -7,12 +7,17 @@ _keepalive() {
     exit 0
 }
 _shutdown() {
-    /bin/bash /etc/macosmisc/tools/pfmanager.sh --action REMOVE --tag @IF_ >/dev/null 2>&1
-    /bin/bash /etc/macosmisc/tools/pfmanager.sh --action BLOCKALL >/dev/null 2>&1
-    /bin/bash /etc/macosmisc/tools/ifmanager.sh --action CHAOS --exclude none >/dev/null 2>&1
-    /bin/bash /etc/macosmisc/tools/ifmanager.sh --action DOWN --exclude none >/dev/null 2>&1
-    /bin/bash /etc/macosmisc/tools/fsmanager.sh --action SETUMASK >/dev/null 2>&1
-    /usr/bin/find / -type d -name "Caches" -delete >/dev/null 2>&1
+    for log in "off" "1s" "2s" "10s" "1m" "1h" "1d" "once"; do
+        echo "" > "/etc/macosmisc/logs/$log.log"
+    done
+    if [ ! -f "/etc/macosmisc/off.install.lock" ]; then
+        /bin/bash /etc/macosmisc/tools/pfmanager.sh --action REMOVE --tag @IF_ --log off
+        /bin/bash /etc/macosmisc/tools/pfmanager.sh --action BLOCKALL --log off
+        /bin/bash /etc/macosmisc/tools/ifmanager.sh --action CHAOS --exclude none --log off
+        /bin/bash /etc/macosmisc/tools/ifmanager.sh --action DOWN --exclude none --log off
+        /bin/bash /etc/macosmisc/tools/fsmanager.sh --action SETUMASK --log off
+        /usr/bin/find / -type d -name "Caches" -delete >/dev/null 2>&1
+    fi
 }
 trap _keepalive SIGINT
 trap _shutdown SIGTERM

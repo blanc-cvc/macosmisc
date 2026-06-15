@@ -69,7 +69,7 @@ EOF
 makedoh() {
     FILEDOH="$HOME/Downloads/DoH-censurfridns.mobileconfig"
     echo "$MOBILECONFIG" > "$FILEDOH"
-    echo "New file: $FILEDOH"
+    echo "New mobileconfig: $FILEDOH"
 }
 
 makedot() {
@@ -80,7 +80,7 @@ makedot() {
     MOBILECONFIG=$(echo "$MOBILECONFIG" | sed 's/DoH/DoT/g')
     MOBILECONFIG=$(echo "$MOBILECONFIG" | sed 's/HTTPS/TLS/g')
     echo "$MOBILECONFIG" > "$FILEDOT"
-    echo "New file: $FILEDOT"
+    echo "New mobileconfig: $FILEDOT"
 }
 
 if [ "$TYPE" == "DOH" ]; then

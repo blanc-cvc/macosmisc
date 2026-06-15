@@ -11,7 +11,7 @@ _job() {
     if [ "$JOB_DONE" == "true" ]; then
         JOB_DONE="false"
         #
-        /bin/bash /etc/macosmisc/tools/ifmanager.sh --action DOWN --exclude hardware >/dev/null 2>&1
+        /bin/bash /etc/macosmisc/tools/ifmanager.sh --action DOWN --exclude hardware --log 1s
         #
         JOB_DONE="true"
     fi
