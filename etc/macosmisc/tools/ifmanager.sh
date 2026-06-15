@@ -79,6 +79,8 @@ set_new_ip_mac_of_if() {
 
 ##
 
+echo "$(date +%H:%M:%S) fsmanager: action:$IFS_ACTION excluded:(${IFS_EXCLUDED[@]}) included:(${IFS_INCLUDED[@]})" >> "$LOG_FILE"
+
 INTERFACES=$(ifconfig | awk '/^[a-z0-9]+:/{gsub(/:$/, "", $1); print $1}')
 
 ## ACTION AIRPORTPREFS

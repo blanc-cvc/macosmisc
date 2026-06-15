@@ -47,14 +47,16 @@ fi
 
 ##
 
+echo "$(date +%H:%M:%S) ifobserver: action:$IFS_ACTION included:(${IFS_INCLUDED[@]})" >> "$LOG_FILE"
+
 if [ "$IFS_ACTION" == "WATCHDHCP" ]; then
-    echo "$(date +%H:%M:%S) ifobserver: WATCHDHCP" >> "$LOG_FILE"
     for iface in "${IFS_INCLUDED[@]}"; do
         MY_IP_IS_PRIVATE="false"
         MY_IP=$(ifconfig $iface | awk '/inet / {print $2}')
         if [[ "$MY_IP" =~ ^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.) ]]; then
             MY_IP_IS_PRIVATE="true"
         fi
+        echo "$(date +%H:%M:%S) ifobserver: action $IFS_ACTION interface:$iface ip:$MY_IP" >> "$LOG_FILE"
         if [ "$MY_IP_IS_PRIVATE" == "true" ]; then
             /bin/bash "$SCRIPT_DIR/pfmanager.sh" --action COMMENT --tag "@DHCP_,@IF_$iface" --log "$(basename "$LOG_FILE" .log)"
         else

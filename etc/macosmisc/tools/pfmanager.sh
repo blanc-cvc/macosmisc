@@ -134,40 +134,32 @@ remove() {
     sed -i '' "/${PF_TAG}.*/ { /\$extif/! d; }" "${PF_FILE}.new"
 }
 
+echo "$(date +%H:%M:%S) fsmanager: action:$PF_ACTION tag:(${PF_TAG[@]})" >> "$LOG_FILE"
 
 if [ "$PF_ACTION" == "COMMENT" ]; then
-    echo "$(date +%H:%M:%S) pfmanager: COMMENT ${PF_TAG[@]}" >> "$LOG_FILE"
     comment
 elif [ "$PF_ACTION" == "UNCOMMENT" ]; then
-    echo "$(date +%H:%M:%S) pfmanager: UNCOMMENT ${PF_TAG[@]}" >> "$LOG_FILE"
     uncomment
 elif [ "$PF_ACTION" == "REMOVE" ]; then
     # priority
-    echo "$(date +%H:%M:%S) pfmanager: REMOVE ${PF_TAG[@]}" >> "$LOG_FILE"
     remove
 elif [ "$PF_ACTION" == "DISABLEALF" ]; then
-    echo "$(date +%H:%M:%S) pfmanager: DISABLEALF" >> "$LOG_FILE"
     /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate off >/dev/null 2>&1
     exit 0
 elif [ "$PF_ACTION" == "ENABLE" ]; then
-    echo "$(date +%H:%M:%S) pfmanager: ENABLE" >> "$LOG_FILE"
     /sbin/pfctl -e >/dev/null 2>&1
     /sbin/pfctl -f /etc/pf.conf >/dev/null 2>&1
     exit 0
 elif [ "$PF_ACTION" == "BLOCKALL" ]; then
-    echo "$(date +%H:%M:%S) pfmanager: BLOCKALL" >> "$LOG_FILE"
     /sbin/pfctl -e >/dev/null 2>&1
     /sbin/pfctl -f /etc/pf.blockall.conf >/dev/null 2>&1
     exit 0
 elif [ "$PF_ACTION" == "INITRULES" ]; then
     # priority
-    echo "$(date +%H:%M:%S) pfmanager: INITRULES" >> "$LOG_FILE"
     IFS_INCLUDED=""
     _utils_wifi_ethernet_interfaces "IFS_INCLUDED"
     _utils_pf_init_rules "${IFS_INCLUDED[@]}"
-    echo "$(date +%H:%M:%S) pfmanager: INITRULES ${IFS_INCLUDED[@]} done" >> "$LOG_FILE"
 elif [ "$PF_ACTION" == "UNCOMMENT_AUTO_DNSTYPE" ]; then
-    echo "$(date +%H:%M:%S) pfmanager: UNCOMMENT_AUTO_DNSTYPE" >> "$LOG_FILE"
     DNS_TYPE=$(_utils_detect_dns_type)
     if [ "$DNS_TYPE" == "DoH" ]; then
         PF_TAG="@DNS_DOH" && uncomment
@@ -198,7 +190,7 @@ if [[ "$PF_ACTION" == "REMOVE" || "$PF_ACTION" == "INITRULES" ]] || [ ! -f "$SCR
     if ! pfctl -nf "${PF_FILE}.new" 2>/dev/null; then
         mv "${PF_FILE}.new" "${PF_FILE}.invalid"
         cp "${PF_FILE}.1" "${PF_FILE}"
-        echo "$(date +%H:%M:%S) pfmanager: INVALID pf.conf.invalid" >> "$LOG_FILE"
+        echo "$(date +%H:%M:%S) pfmanager: pf.conf.invalid: action:$PF_ACTION tag:(${PF_TAG[@]})" >> "$LOG_FILE"
         rm "$SCRIPT_DIR/../../pf.conf.lock"*
         exit 1
     fi
@@ -212,12 +204,12 @@ if [[ "$PF_ACTION" == "REMOVE" || "$PF_ACTION" == "INITRULES" ]] || [ ! -f "$SCR
         done
         mv "$PF_FILE" "${PF_FILE}.1"
         mv "${PF_FILE}.new" "$PF_FILE"
-        echo "$(date +%H:%M:%S) pfmanager: new pf.conf from --action $PF_ACTION --tag ${PF_TAG[@]}" >> "$LOG_FILE"
+        echo "$(date +%H:%M:%S) pfmanager: new pf.conf: action:$PF_ACTION tag:(${PF_TAG[@]})" >> "$LOG_FILE"
     else
         rm "${PF_FILE}.new"
     fi
 
     rm "$SCRIPT_DIR/../../pf.conf.lock"*
 else
-    echo "$(date +%H:%M:%S) pfmanager: priority call, aborting --action $PF_ACTION --tag ${PF_TAG[@]}" >> "$LOG_FILE"
+    echo "$(date +%H:%M:%S) pfmanager: priority call, aborting: action:$PF_ACTION tag:(${PF_TAG[@]})" >> "$LOG_FILE"
 fi
