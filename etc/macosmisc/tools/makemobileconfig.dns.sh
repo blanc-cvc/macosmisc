@@ -13,8 +13,6 @@ while [[ "$#" -gt 0 ]]; do
     esac
 done
 
-
-
 MOBILECONFIG=$(cat << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -44,7 +42,7 @@ MOBILECONFIG=$(cat << EOF
             <key>PayloadIdentifier</key>
             <string>dk.censurfridns.doh.settings</string>
             <key>PayloadUUID</key>
-            <string>$(uuidgen)</string>
+            <string>00000000-0000-0000-0000-000000000000</string>
             <key>PayloadVersion</key>
             <integer>1</integer>
         </dict>
@@ -55,6 +53,8 @@ MOBILECONFIG=$(cat << EOF
     <string>dk.censurfridns.doh.profile</string>
     <key>PayloadRemovalDisallowed</key>
     <false/>
+    <key>PayloadScope</key>
+    <string>User</string>
     <key>PayloadType</key>
     <string>Configuration</string>
     <key>PayloadUUID</key>
@@ -66,14 +66,23 @@ MOBILECONFIG=$(cat << EOF
 EOF
 )
 
+DNSPayloadUUID=""
+
 makedoh() {
-    FILEDOH="$HOME/Downloads/DoH-censurfridns.mobileconfig"
+    FILEDOH="$HOME/Downloads/doh.censurfridns.mobileconfig"
+    DNSPayloadUUID=$(uuidgen)
+    MOBILECONFIG=$(echo "$MOBILECONFIG" | sed "s/00000000-0000-0000-0000-000000000000/$DNSPayloadUUID/g")
     echo "$MOBILECONFIG" > "$FILEDOH"
     echo "New mobileconfig: $FILEDOH"
 }
 
 makedot() {
-    FILEDOT="$HOME/Downloads/DoT-censurfridns.mobileconfig"
+    FILEDOT="$HOME/Downloads/dot.censurfridns.mobileconfig"
+    if [ ! -z "$DNSPayloadUUID" ]; then
+        MOBILECONFIG=$(echo "$MOBILECONFIG" | sed "s/$DNSPayloadUUID/00000000-0000-0000-0000-000000000000/g")
+    fi
+    DNSPayloadUUID=$(uuidgen)
+    MOBILECONFIG=$(echo "$MOBILECONFIG" | sed "s/00000000-0000-0000-0000-000000000000/$DNSPayloadUUID/g")
     MOBILECONFIG=$(echo "$MOBILECONFIG" | sed '/ServerURL/d')
     MOBILECONFIG=$(echo "$MOBILECONFIG" | sed '/dns-query/d')
     MOBILECONFIG=$(echo "$MOBILECONFIG" | sed 's/doh/dot/g')
@@ -81,6 +90,7 @@ makedot() {
     MOBILECONFIG=$(echo "$MOBILECONFIG" | sed 's/HTTPS/TLS/g')
     echo "$MOBILECONFIG" > "$FILEDOT"
     echo "New mobileconfig: $FILEDOT"
+    sed -i '' "s|00000000-0000-0000-0000-000000000000|$DNSPayloadUUID|g" "$HOME/Downloads/ios.builtinfilter.mobileconfig"
 }
 
 if [ "$TYPE" == "DOH" ]; then
