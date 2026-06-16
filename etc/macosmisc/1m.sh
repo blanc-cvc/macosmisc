@@ -16,6 +16,8 @@ _job() {
         done
         #/bin/bash /etc/macosmisc/tools/pfmanager.sh --action UNCOMMENT_AUTO_DNSTYPE --log 1m
         /bin/bash /etc/macosmisc/tools/pfmanager.sh --action UNCOMMENT --tag @DNS_DOT --log 1m
+        /bin/bash /etc/macosmisc/tools/pfmanager.sh --action UNCOMMENT --tag @DNS_DOH --log 1m
+        /bin/bash /etc/macosmisc/tools/pfmanager.sh --action UNCOMMENT --tag @ICMP_ --log 1m
         /bin/bash /etc/macosmisc/tools/pfmanager.sh --action UNCOMMENT --tag @USER_ --log 1m
         /bin/bash /etc/macosmisc/tools/pfmanager.sh --action UNCOMMENT --tag @PORT_ --log 1m
         /bin/bash /etc/macosmisc/tools/ifobserver.sh --action WATCHDHCP --interface hardware --log 1m

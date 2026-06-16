@@ -14,6 +14,7 @@ table <dns> const { 86.54.11.100, 86.54.11.200 }
 table <porthttps> const { 18.7.29.125, 91.210.59.156, 131.188.12.211, 167.82.50.132, 136.243.18.213, 151.101.2.132, 151.101.194.132, 151.101.66.132, 151.101.130.132, 185.199.108.133, 185.199.109.133, 185.199.110.133, 185.199.111.133 }
 table <portrsync> const { 131.188.12.211 }
 table <unuseddohdot> const { 1.1.1.1, 1.0.0.1, 8.8.8.8, 8.8.4.4, 9.9.9.9, 149.112.112.112, 94.140.14.14, 94.140.15.15, 86.54.11.100, 86.54.11.200, 86.54.11.1, 86.54.11.201, 86.54.11.13, 86.54.11.213, 194.242.2.2, 194.242.2.3, 80.67.169.12, 80.67.169.40, 185.228.168.168, 185.228.169.168, 185.228.168.10, 185.228.169.11, 208.67.222.222, 208.67.220.220, 208.67.222.123, 208.67.220.123, 208.67.222.2, 208.67.220.2 }
+table <others> const { 213.44.20/24 } # bbox.fr
 
 block all
 block quick inet6
@@ -21,8 +22,8 @@ block in  quick on lo0 inet from !127.0.0.1
 block out quick on lo0 inet to !127.0.0.1
 block quick on !lo0 inet from 127/8
 block quick on !lo0 inet to 127/8
-block out quick to { <bogons> }
-block in  quick from { <bogons> }
+block out quick to { <bogons>, <others> }
+block in  quick from { <bogons>, <others> }
 
 ######## RULES
 
@@ -71,27 +72,27 @@ block quick flags FUP/FUP
 #### KEEP STATE TCP
 ## DNS 443 (DoH) user _mdnsresponder (via mobileconfig) here using censurfridns.dk||uncensoreddns.org
 #pass out quick on $extif inet proto tcp from ($extif) port $sports to 89.233.43.71 port 443 user _mdnsresponder flags S/FSRPAUEW keep state # @DNS_DOH
-#pass out quick on en0 inet proto tcp from (en0) port $sports to 89.233.43.71 port 443 user _mdnsresponder flags S/FSRPAUEW keep state # @DNS_DOH # @IF_en0
+pass out quick on en0 inet proto tcp from (en0) port $sports to 89.233.43.71 port 443 user _mdnsresponder flags S/FSRPAUEW keep state # @DNS_DOH # @IF_en0
 ## DNS 853 (DoT) user _mdnsresponder (via mobileconfig) here using censurfridns.dk||uncensoreddns.org
 #pass out quick on $extif inet proto tcp from ($extif) port $sports to 89.233.43.71 port 853 user _mdnsresponder flags S/FSRPAUEW keep state # @DNS_DOT
-#pass out quick on en0 inet proto tcp from (en0) port $sports to 89.233.43.71 port 853 user _mdnsresponder flags S/FSRPAUEW keep state # @DNS_DOT # @IF_en0
+pass out quick on en0 inet proto tcp from (en0) port $sports to 89.233.43.71 port 853 user _mdnsresponder flags S/FSRPAUEW keep state # @DNS_DOT # @IF_en0
 #### BLOCK QUICK KEEP STATE 1
 block out quick to { <unuseddohdot> }
 block in  quick from { <unuseddohdot> }
 ## HTTPS MAIL user 501 # HTTPS: S/FSRPAUEW SA/FSRPAUEW A/FSRPAUEW AP/FSRPAUEW F/FSRPAUEW FA/FSRPAUEW R/FSRPAUEW RA/FSRPAUEW
 #pass out quick on $extif inet proto tcp from ($extif) port $sports to port { 443 } user 501 flags S/FSRPAUEW keep state # @USER_HTTPS
-#pass out quick on en0 inet proto tcp from (en0) port $sports to port { 443 } user 501 flags S/FSRPAUEW keep state # @USER_HTTPS # @IF_en0
+pass out quick on en0 inet proto tcp from (en0) port $sports to port { 443 } user 501 flags S/FSRPAUEW keep state # @USER_HTTPS # @IF_en0
 #pass out quick on $extif inet proto tcp from ($extif) port $sports to port { 993, 587, 465 } user 501 flags S/FSRPAUEW keep state # @USER_MAIL
-#pass out quick on en0 inet proto tcp from (en0) port $sports to port { 993, 587, 465 } user 501 flags S/FSRPAUEW keep state # @USER_MAIL # @IF_en0
+pass out quick on en0 inet proto tcp from (en0) port $sports to port { 993, 587, 465 } user 501 flags S/FSRPAUEW keep state # @USER_MAIL # @IF_en0
 ## PORT user root and user 502(macports)
 #pass out quick on $extif inet proto tcp from ($extif) port $sports to { <porthttps> } port { 443 } user 0 flags S/FSRPAUEW keep state # @PORT_ROOT_HTTPS
-#pass out quick on en0 inet proto tcp from (en0) port $sports to { <porthttps> } port { 443 } user 0 flags S/FSRPAUEW keep state # @PORT_ROOT_HTTPS # @IF_en0
+pass out quick on en0 inet proto tcp from (en0) port $sports to { <porthttps> } port { 443 } user 0 flags S/FSRPAUEW keep state # @PORT_ROOT_HTTPS # @IF_en0
 #pass out quick on $extif inet proto tcp from ($extif) port $sports to { <porthttps> } port { 443 } user 502 flags S/FSRPAUEW keep state # @PORT_USER_HTTPS
-#pass out quick on en0 inet proto tcp from (en0) port $sports to { <porthttps> } port { 443 } user 502 flags S/FSRPAUEW keep state # @PORT_USER_HTTPS # @IF_en0
+pass out quick on en0 inet proto tcp from (en0) port $sports to { <porthttps> } port { 443 } user 502 flags S/FSRPAUEW keep state # @PORT_USER_HTTPS # @IF_en0
 #pass out quick on $extif inet proto tcp from ($extif) port $sports to { <portrsync> } port { 873 } user 0 flags S/FSRPAUEW keep state # @PORT_ROOT_RSYNC
-#pass out quick on en0 inet proto tcp from (en0) port $sports to { <portrsync> } port { 873 } user 0 flags S/FSRPAUEW keep state # @PORT_ROOT_RSYNC # @IF_en0
+pass out quick on en0 inet proto tcp from (en0) port $sports to { <portrsync> } port { 873 } user 0 flags S/FSRPAUEW keep state # @PORT_ROOT_RSYNC # @IF_en0
 #pass out quick on $extif inet proto tcp from ($extif) port $sports to { <portrsync> } port { 873 } user 502 flags S/FSRPAUEW keep state # @PORT_USER_RSYNC
-#pass out quick on en0 inet proto tcp from (en0) port $sports to { <portrsync> } port { 873 } user 502 flags S/FSRPAUEW keep state # @PORT_USER_RSYNC # @IF_en0
+pass out quick on en0 inet proto tcp from (en0) port $sports to { <portrsync> } port { 873 } user 502 flags S/FSRPAUEW keep state # @PORT_USER_RSYNC # @IF_en0
 #### END OF KEEP STATE
 
 ######## END OF RULES

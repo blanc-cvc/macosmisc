@@ -51,9 +51,13 @@ fi
 if [ "$PF_ACTION" != "BLOCKALL" ] && [ "$PF_ACTION" != "DISABLEALF" ] && [ "$PF_ACTION" != "ENABLE" ]; then
     if [ "$PF_ACTION" == "INITRULES" ] || [ "$PF_ACTION" == "REMOVE" ]; then
         touch "$SCRIPT_DIR/../../pf.conf.lock.priority"
+        echo "$(date +%H:%M:%S) fsmanager: pf.conf.lock.priority created, waiting 20s: action:$PF_ACTION tag:(${PF_TAG[@]})" >> "$LOG_FILE"
+        wait 20
     fi
     if [ ! -f "$SCRIPT_DIR/../../pf.conf.lock" ]; then
         touch "$SCRIPT_DIR/../../pf.conf.lock"
+        echo "$(date +%H:%M:%S) fsmanager: pf.conf.lock created, waiting 20s: action:$PF_ACTION tag:(${PF_TAG[@]})" >> "$LOG_FILE"
+        wait 20
     else
         if [ "$PF_ACTION" != "INITRULES" ] && [ "$PF_ACTION" != "REMOVE" ]; then
             echo "$(date +%H:%M:%S) pfmanager: file is already taken, can't execute --action $PF_ACTION --tag ${PF_TAG[@]}" >> "$LOG_FILE"
@@ -99,7 +103,8 @@ comment() {
         rm "${PF_FILE}.new"
         while IFS= read -r line || [[ -n "$line" ]]; do
             if [ -f "$SCRIPT_DIR/../../pf.conf.lock.priority" ]; then
-                exit 0 # keep .new ; going to be overwritten
+                rm "${PF_FILE}.new"
+                exit 0
             fi
             if check_line_has_all_tags "$line" "${PF_TAG[@]}"; then
                 if [[ ! "$line" =~ ^# ]]; then
@@ -118,7 +123,8 @@ uncomment() {
         rm "${PF_FILE}.new"
         while IFS= read -r line || [[ -n "$line" ]]; do
             if [ -f "$SCRIPT_DIR/../../pf.conf.lock.priority" ]; then
-                exit 0 # keep .new ; going to be overwritten
+                rm "${PF_FILE}.new"
+                exit 0
             fi
             if check_line_has_all_tags "$line" "${PF_TAG[@]}"; then
                 if [[ "$line" =~ ^# ]]; then

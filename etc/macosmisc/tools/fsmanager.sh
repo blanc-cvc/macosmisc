@@ -145,7 +145,7 @@ if [ "$FS_ACTION" == "SETRESOLVER" ]; then
         chmod 0755 /etc/resolver
         chown root:wheel /etc/resolver
     fi
-    RESOLVERS=("arpa" "example" "home" "internal" "invalid" "lan" "local" "localhost" "private" "test")
+    RESOLVERS=("arpa" "example" "home" "internal" "invalid" "lan" "local" "localhost" "private" "test" "bbox.fr")
     for resolver_tld in "${RESOLVERS[@]}"; do
         echo "nameserver 127.0.0.1" > "/etc/resolver/$resolver_tld"
     done
